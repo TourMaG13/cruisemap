@@ -15,7 +15,7 @@ const admin = require('firebase-admin');
 // =====================================================================
 
 const AISSTREAM_API_KEY = process.env.AISSTREAM_API_KEY;
-const LISTEN_DURATION_MS = 120_000; // 2 minutes d'écoute
+const LISTEN_DURATION_MS = 240_000; // 4 minutes d'écoute
 
 // Navires à suivre : MMSI → infos pour référence
 const TRACKED_SHIPS = {
