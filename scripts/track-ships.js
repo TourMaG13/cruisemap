@@ -64,21 +64,27 @@ function connectAISstream() {
     ws.on('open', () => {
       console.log('✅ Connecté au WebSocket AISstream');
       
-      // Envoyer le message de souscription
-      // On écoute sur une bounding box mondiale pour capter tous nos navires
+      // Format exact de la doc aisstream.io
       const subscriptionMessage = {
-        APIKey: AISSTREAM_API_KEY,
-        BoundingBoxes: [[[-90, -180], [90, 180]]], // Monde entier
-        FilterMessageTypes: ['PositionReport', 'StandardClassBPositionReport', 'ShipStaticData'],
+        Apikey: AISSTREAM_API_KEY,
+        BoundingBoxes: [[[-90, -180], [90, 180]]],
         FiltersShipMMSI: MMSI_LIST,
+        FilterMessageTypes: ['PositionReport']
       };
       
+      console.log('📨 Envoi souscription:', JSON.stringify(subscriptionMessage).substring(0, 200) + '...');
       ws.send(JSON.stringify(subscriptionMessage));
-      console.log('📨 Souscription envoyée (filtre MMSI actif)\n');
+      console.log('📨 Souscription envoyée\n');
     });
 
     ws.on('message', (data) => {
       messagesReceived++;
+      
+      // Log premier message brut pour debug
+      if (messagesReceived <= 3) {
+        const raw = data.toString().substring(0, 300);
+        console.log(`📩 Message #${messagesReceived} (brut): ${raw}...`);
+      }
       
       try {
         const msg = JSON.parse(data.toString());
@@ -135,10 +141,11 @@ function connectAISstream() {
 
     ws.on('error', (err) => {
       console.error('❌ Erreur WebSocket:', err.message);
+      console.error('   Stack:', err.stack?.substring(0, 200));
     });
 
     ws.on('close', (code, reason) => {
-      console.log(`\n🔌 WebSocket fermé (code ${code})`);
+      console.log(`\n🔌 WebSocket fermé (code ${code}, raison: ${reason || 'aucune'})`);
     });
 
     // Fermer après LISTEN_DURATION_MS
