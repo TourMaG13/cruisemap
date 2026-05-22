@@ -15,7 +15,7 @@ const admin = require('firebase-admin');
 // =====================================================================
 
 const AISSTREAM_API_KEY = process.env.AISSTREAM_API_KEY;
-const LISTEN_DURATION_MS = 240_000; // 4 minutes d'écoute
+const LISTEN_DURATION_MS = 120_000; // 2 minutes d'écoute
 
 // Navires à suivre : MMSI → infos pour référence
 const TRACKED_SHIPS = {
@@ -63,6 +63,7 @@ function connectAISstream() {
 
     ws.on('open', () => {
       console.log('✅ Connecté au WebSocket AISstream');
+      console.log(`   readyState: ${ws.readyState}`);
       
       // Format exact de la doc aisstream.io
       const subscriptionMessage = {
@@ -75,7 +76,27 @@ function connectAISstream() {
       console.log('📨 Envoi souscription:', JSON.stringify(subscriptionMessage).substring(0, 200) + '...');
       ws.send(JSON.stringify(subscriptionMessage));
       console.log('📨 Souscription envoyée\n');
+
+      // Keepalive ping toutes les 30s
+      const pingInterval = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.ping();
+        }
+      }, 30000);
+
+      // Status log toutes les 30s
+      const statusInterval = setInterval(() => {
+        console.log(`⏳ ${Math.round((Date.now() - startTime) / 1000)}s — ${messagesReceived} msgs reçus, ${positions.size} positions, ws=${ws.readyState === WebSocket.OPEN ? 'OPEN' : 'CLOSED'}`);
+      }, 30000);
+
+      // Cleanup intervals on close
+      ws.on('close', () => {
+        clearInterval(pingInterval);
+        clearInterval(statusInterval);
+      });
     });
+
+    const startTime = Date.now();
 
     ws.on('message', (data) => {
       messagesReceived++;
@@ -142,6 +163,17 @@ function connectAISstream() {
     ws.on('error', (err) => {
       console.error('❌ Erreur WebSocket:', err.message);
       console.error('   Stack:', err.stack?.substring(0, 200));
+    });
+
+    ws.on('pong', () => {
+      // Connection is alive - silent
+    });
+
+    ws.on('unexpected-response', (req, res) => {
+      console.error(`❌ Réponse inattendue du serveur: HTTP ${res.statusCode}`);
+      let body = '';
+      res.on('data', chunk => body += chunk);
+      res.on('end', () => console.error('   Body:', body.substring(0, 200)));
     });
 
     ws.on('close', (code, reason) => {
