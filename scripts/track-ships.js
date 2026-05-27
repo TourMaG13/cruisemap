@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 const admin = require('firebase-admin');
 const AISSTREAM_API_KEY = process.env.AISSTREAM_API_KEY;
-const LISTEN_DURATION_MS = 240000;
+const LISTEN_DURATION_MS = 150000; // 2.5 minutes par vague pour tenir dans le timeout
 const MAX_CONNECTIONS = 3;
 
 const TRACKED_SHIPS = {
