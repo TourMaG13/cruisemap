@@ -2,13 +2,13 @@ const WebSocket = require('ws');
 const admin = require('firebase-admin');
 const AISSTREAM_API_KEY = process.env.AISSTREAM_API_KEY;
 const LISTEN_DURATION_MS = 240000;
-const MAX_CONNECTIONS = 3; // AISstream limite a 3 connexions simultanées
+const MAX_CONNECTIONS = 3;
 
 const TRACKED_SHIPS = {
   // === SCENIC ===
   '311000995': { name: 'Scenic Eclipse', company: 'Scenic' },
   '311001061': { name: 'Scenic Eclipse II', company: 'Scenic' },
-  // === CROISIEUROPE ===
+  // === CROISIEUROPE (confirmes) ===
   '226010880': { name: 'MS Loire Princesse', company: 'CroisiEurope' },
   '253242505': { name: 'MS France', company: 'CroisiEurope' },
   '253242509': { name: 'MS Monet', company: 'CroisiEurope' },
@@ -45,7 +45,7 @@ const TRACKED_SHIPS = {
   '253242515': { name: 'MS Douro Elegance', company: 'CroisiEurope' },
   '253242516': { name: 'MS Andorinha', company: 'CroisiEurope' },
   '226001470': { name: 'MS Guadalquivir', company: 'CroisiEurope' },
-  // === VIKING (MMSI confirmes via MarineTraffic/VesselFinder) ===
+  // === VIKING (12 confirmes) ===
   '269057390': { name: 'Viking Freya', company: 'Viking' },
   '269057407': { name: 'Viking Embla', company: 'Viking' },
   '269057408': { name: 'Viking Aegir', company: 'Viking' },
@@ -57,11 +57,100 @@ const TRACKED_SHIPS = {
   '269057498': { name: 'Viking Skirnir', company: 'Viking' },
   '269057499': { name: 'Viking Modi', company: 'Viking' },
   '269057549': { name: 'Viking Tialfi', company: 'Viking' },
-  '269057649': { name: 'nickoVISION', company: 'nicko cruises' },
   '269057695': { name: 'Viking Sigyn', company: 'Viking' },
   '269057766': { name: 'Viking Egdir', company: 'Viking' },
-  // === EMERALD (MMSI confirme: Star 229818000) ===
+  // === VIKING (estimes - prefixe suisse 269057xxx) ===
+  '269057391': { name: 'Viking Odin', company: 'Viking' },
+  '269057392': { name: 'Viking Sigrun', company: 'Viking' },
+  '269057393': { name: 'Viking Heimdal', company: 'Viking' },
+  '269057395': { name: 'Viking Forseti', company: 'Viking' },
+  '269057396': { name: 'Viking Vidar', company: 'Viking' },
+  '269057397': { name: 'Viking Jarl', company: 'Viking' },
+  '269057398': { name: 'Viking Hermod', company: 'Viking' },
+  '269057399': { name: 'Viking Beyla', company: 'Viking' },
+  '269057400': { name: 'Viking Hnoss', company: 'Viking' },
+  '269057401': { name: 'Viking Kvasir', company: 'Viking' },
+  '269057402': { name: 'Viking Mani', company: 'Viking' },
+  '269057403': { name: 'Viking Hild', company: 'Viking' },
+  '269057404': { name: 'Viking Radgrid', company: 'Viking' },
+  '269057405': { name: 'Viking Dagur', company: 'Viking' },
+  '269057406': { name: 'Viking Vilhjalm', company: 'Viking' },
+  '269057409': { name: 'Viking Fulla', company: 'Viking' },
+  '269057410': { name: 'Viking Alsvin', company: 'Viking' },
+  '269057411': { name: 'Viking Skaga', company: 'Viking' },
+  '269057412': { name: 'Viking Honir', company: 'Viking' },
+  '269057413': { name: 'Viking Lif', company: 'Viking' },
+  '269057414': { name: 'Viking Sol', company: 'Viking' },
+  '269057415': { name: 'Viking Ra', company: 'Viking' },
+  '269057416': { name: 'Viking Thoth', company: 'Viking' },
+  '269057418': { name: 'Viking Sobek', company: 'Viking' },
+  '269057419': { name: 'Viking Saigon', company: 'Viking' },
+  '269057420': { name: 'MS Antares', company: 'Viking' },
+  '269057421': { name: 'Viking Eldir', company: 'Viking' },
+  '269057422': { name: 'Viking Eir', company: 'Viking' },
+  '269057423': { name: 'Viking Osfrid', company: 'Viking' },
+  '269057424': { name: 'Viking Annar', company: 'Viking' },
+  '269057425': { name: 'Viking Ganges', company: 'Viking' },
+  '269057426': { name: 'Viking Sekhmet', company: 'Viking' },
+  '269057427': { name: 'Viking Torgil', company: 'Viking' },
+  '269057428': { name: 'Viking Ve', company: 'Viking' },
+  '269057429': { name: 'Viking Kara', company: 'Viking' },
+  '269057430': { name: 'Viking Astrild', company: 'Viking' },
+  '269057431': { name: 'Viking Brahmaputra', company: 'Viking' },
+  '269057432': { name: 'Viking Atla', company: 'Viking' },
+  '269057433': { name: 'Viking Hemming', company: 'Viking' },
+  '269057434': { name: 'Viking Tonle', company: 'Viking' },
+  '269057435': { name: 'Viking Ptah', company: 'Viking' },
+  '269057436': { name: 'Viking Nerthus', company: 'Viking' },
+  '269057437': { name: 'Viking Aton', company: 'Viking' },
+  '269057438': { name: 'Viking Fjorgyn', company: 'Viking' },
+  '269057439': { name: 'Viking Laga', company: 'Viking' },
+  '269057440': { name: 'Viking Hervor', company: 'Viking' },
+  '269057441': { name: 'Viking Helgrim', company: 'Viking' },
+  '269057442': { name: 'Viking Gyda', company: 'Viking' },
+  '269057443': { name: 'Viking Gefjon', company: 'Viking' },
+  '269057444': { name: 'Viking Gersemi', company: 'Viking' },
+  '269057445': { name: 'Viking Anubis', company: 'Viking' },
+  '269057446': { name: 'Viking Rolf', company: 'Viking' },
+  '269057447': { name: 'Viking Rinda', company: 'Viking' },
+  '269057449': { name: 'Viking Magni', company: 'Viking' },
+  '269057450': { name: 'Viking Gymir', company: 'Viking' },
+  '269057451': { name: 'Viking Buri', company: 'Viking' },
+  '269057452': { name: 'Viking Haki', company: 'Viking' },
+  '269057453': { name: 'Viking Delling', company: 'Viking' },
+  '269057454': { name: 'Viking Skadi', company: 'Viking' },
+  '269057455': { name: 'Viking Rota', company: 'Viking' },
+  '269057456': { name: 'Viking Kadlin', company: 'Viking' },
+  '269057457': { name: 'Viking Gullveig', company: 'Viking' },
+  '269057458': { name: 'Viking Bragi', company: 'Viking' },
+  '269057459': { name: 'Viking Vili', company: 'Viking' },
+  '269057460': { name: 'Viking Lofn', company: 'Viking' },
+  '269057461': { name: 'Viking Osiris', company: 'Viking' },
+  '269057462': { name: 'Viking Halogi', company: 'Viking' },
+  '269057463': { name: 'Viking Ullur', company: 'Viking' },
+  '269057464': { name: 'Viking Eistla', company: 'Viking' },
+  '269057466': { name: 'Viking Fjolvar', company: 'Viking' },
+  '269057467': { name: 'Viking Vali', company: 'Viking' },
+  '269057468': { name: 'Viking Hathor', company: 'Viking' },
+  '269057470': { name: 'Viking Herja', company: 'Viking' },
+  '269057471': { name: 'Viking Geb', company: 'Viking' },
+  '269057472': { name: 'Viking Egil', company: 'Viking' },
+  '269057473': { name: 'Viking Mississippi', company: 'Viking' },
+  '269057474': { name: 'Viking Alruna', company: 'Viking' },
+  '269057475': { name: 'Viking Amun', company: 'Viking' },
+  '269057476': { name: 'Viking Tir', company: 'Viking' },
+  '269057477': { name: 'Viking Ran', company: 'Viking' },
+  '269057479': { name: 'Viking Kari', company: 'Viking' },
+  '269057480': { name: 'Viking Idun', company: 'Viking' },
+  '269057482': { name: 'Viking Einar', company: 'Viking' },
+  '269057483': { name: 'Viking Sjofn', company: 'Viking' },
+  '269057484': { name: 'Viking Bestla', company: 'Viking' },
+  '269057485': { name: 'Viking Mimir', company: 'Viking' },
+  '269057486': { name: 'Viking Tor', company: 'Viking' },
+  // === EMERALD (Star confirme) ===
   '229818000': { name: 'Emerald Star', company: 'Emerald' },
+  // === NICKO (confirme) ===
+  '269057649': { name: 'nickoVISION', company: 'nicko cruises' },
   // === A-ROSA (confirmes) ===
   '211572460': { name: 'A-Rosa Silva', company: 'A-Rosa' },
   '211621310': { name: 'A-Rosa Flora', company: 'A-Rosa' },
@@ -125,9 +214,15 @@ function connectBatch(batchMMSI, batchIndex, positions) {
 async function connectAISstream() {
   var positions = new Map();
   var batchSize = Math.ceil(MMSI_LIST.length / MAX_CONNECTIONS);
+  if (batchSize > 50) batchSize = 50; // AISstream max 50 par connexion
   var batches = chunk(MMSI_LIST, batchSize);
   console.log(MMSI_LIST.length + ' navires en ' + batches.length + ' connexions (max '+batchSize+' par batch)\n');
-  await Promise.all(batches.map(function(b,i){return connectBatch(b,i+1,positions);}));
+  // Si plus de 3 batches, lancer par vagues de 3
+  for (var wave = 0; wave < batches.length; wave += MAX_CONNECTIONS) {
+    var waveBatches = batches.slice(wave, wave + MAX_CONNECTIONS);
+    console.log('Vague ' + (Math.floor(wave/MAX_CONNECTIONS)+1) + ': ' + waveBatches.length + ' connexions');
+    await Promise.all(waveBatches.map(function(b, i) { return connectBatch(b, wave + i + 1, positions); }));
+  }
   console.log('\nPositions: ' + positions.size + '/' + MMSI_LIST.length + '\n');
   return positions;
 }
