@@ -201,6 +201,15 @@ function connectBatch(batchMMSI, batchIndex, positions) {
         if(!mmsi||!TRACKED_SHIPS[mmsi])return;
         var pr = msg.Message&&msg.Message.PositionReport; if(!pr)return;
         var si = TRACKED_SHIPS[mmsi];
+        var aisName = (meta.ShipName||'').trim().toUpperCase();
+        var expectedName = si.name.toUpperCase().replace(/^MS\s+/,'').replace(/^SS\s+/,'');
+        // Verification: si le nom AIS ne contient aucun mot du nom attendu, c'est un faux positif
+        var expectedWords = expectedName.split(/[\s-]+/).filter(function(w){return w.length>2;});
+        var nameMatch = expectedWords.some(function(w){return aisName.indexOf(w)>=0;});
+        if(!nameMatch && aisName.length > 0) {
+          console.log('!! SKIP '+aisName+' (attendu: '+si.name+', MMSI '+mmsi+')');
+          return;
+        }
         positions.set(mmsi, { mmsi:mmsi, name:(meta.ShipName||'').trim()||si.name, lat:pr.Latitude, lng:pr.Longitude, speed:pr.Sog, course:pr.Cog, heading:pr.TrueHeading, navStatus:pr.NavigationalStatus, timestamp:meta.time_utc||new Date().toISOString(), updatedAt:new Date().toISOString(), company:si.company });
         console.log('>> '+((meta.ShipName||'').trim()||si.name)+' ('+si.company+') '+pr.Latitude.toFixed(4)+'N '+pr.Longitude.toFixed(4)+'E '+pr.Sog+'kn');
       } catch(e){}
