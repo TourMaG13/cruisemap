@@ -1,0 +1,2988 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CruiseMAP — Carte des Croisiéristes | TourMaG</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0B1D33;
+  --blue: #1B6EC2;
+  --blue-light: #3B8AE0;
+  --blue-dark: #145DA0;
+  --teal: #0EA5A2;
+  --teal-light: #14C8C4;
+  --orange: #E8913A;
+  --gold: #D4A843;
+  --green: #22C55E;
+  --purple: #8B5CF6;
+  --red: #EF4444;
+  /* Cruise type colors */
+  --ct-maritime: #1B6EC2;
+  --ct-fluviale: #0EA5A2;
+  --ct-expedition: #8B5CF6;
+  --ct-luxe: #D4A843;
+  --ct-voilier: #E8913A;
+  --ct-polaire: #64B5F6;
+  /* Gamme colors */
+  --gm-economique: #78909C;
+  --gm-standard: #22C55E;
+  --gm-premium: #1B6EC2;
+  --gm-luxe: #D4A843;
+  --gm-ultra: #8B5CF6;
+  --bg: #F5F7FA;
+  --bg-card: #FFFFFF;
+  --border: #DDE3ED;
+  --border-light: #EDF1F7;
+  --text: #1A2332;
+  --text-light: #5A6B80;
+  --text-lighter: #8E9DB5;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+  --radius: 8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;height:100vh}
+
+/* ===== EMBED ===== */
+.embed-container{position:relative;width:100%;aspect-ratio:1/1;cursor:pointer;overflow:hidden;border-radius:var(--radius);background:#c8d6e5}
+.embed-map{width:100%;height:100%;z-index:1}
+.embed-overlay{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(11,29,51,0.08);transition:opacity 0.3s}
+.embed-overlay-content{background:rgba(11,29,51,0.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:12px;padding:20px 32px;display:flex;flex-direction:column;align-items:center;width:340px;min-height:190px;justify-content:center}
+.embed-overlay h2{color:#fff;font-size:1.3rem;font-weight:700;margin-bottom:6px;text-shadow:0 1px 4px rgba(0,0,0,0.5)}
+.embed-overlay p{color:rgba(255,255,255,0.9);font-size:0.85rem;text-shadow:0 1px 3px rgba(0,0,0,0.4)}
+.embed-carousel{min-height:48px;text-align:center;transition:opacity 0.4s}
+.embed-counter{display:flex;align-items:baseline;justify-content:center;gap:5px;margin:10px 0 2px;color:rgba(255,255,255,0.9);font-size:0.82rem;font-weight:600}
+.embed-counter-num{font-size:1.6rem;font-weight:700;color:var(--teal-light)}
+.embed-overlay .embed-btn{margin-top:14px;background:linear-gradient(135deg,var(--blue),var(--teal));color:#fff;border:none;padding:12px 32px;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;animation:btnPulse 2s ease-in-out infinite;box-shadow:0 4px 15px rgba(27,110,194,0.4)}
+.embed-overlay .embed-btn:hover{background:linear-gradient(135deg,var(--blue-light),var(--teal-light));transform:translateY(-1px);animation:none}
+@keyframes btnPulse{0%,100%{box-shadow:0 4px 15px rgba(27,110,194,0.4);transform:scale(1)}50%{box-shadow:0 4px 25px rgba(27,110,194,0.7);transform:scale(1.04)}}
+.embed-container:hover .embed-overlay{opacity:0.95}
+.embed-dot-pulse{width:8px;height:8px;border-radius:50%;background:var(--blue-dark);position:relative;box-shadow:0 0 4px rgba(27,110,194,0.6)}
+.embed-dot-pulse::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1.5px solid var(--blue-dark);opacity:0;animation:embedRing 2.2s ease-out infinite}
+.embed-dot-pulse:nth-child(2n)::after{animation-delay:0.7s}
+.embed-dot-pulse:nth-child(3n)::after{animation-delay:1.4s}
+@keyframes embedRing{0%{transform:scale(0.6);opacity:0.7}100%{transform:scale(2);opacity:0}}
+.embed-container.size-small{width:300px;height:245px;border-radius:0}
+.embed-container.size-small .embed-overlay-content{padding:14px 20px;width:260px;min-height:160px}
+.embed-container.size-small .embed-overlay h2{font-size:1rem}
+.embed-container.size-small .embed-overlay p{font-size:0.75rem}
+.embed-container.size-small .embed-overlay .embed-btn{padding:8px 20px;font-size:0.8rem;margin-top:10px}
+
+/* ===== MODAL ===== */
+.modal-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-backdrop.open{display:flex}
+.modal-content{background:var(--bg-card);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;width:96vw;height:94vh;max-width:1600px;box-shadow:var(--shadow-lg)}
+
+/* ===== TOPBAR ===== */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--navy);color:#fff;flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:10px;font-size:1rem;font-weight:700;letter-spacing:-0.3px}
+.topbar-count{background:linear-gradient(135deg,var(--blue),var(--teal));font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:4px}
+.btn-close{background:rgba(255,255,255,0.15);border:none;color:#fff;width:32px;height:32px;border-radius:6px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s}
+.btn-close:hover{background:rgba(255,255,255,0.25)}
+
+/* ===== LAYOUT ===== */
+.main-layout{display:flex;flex:1;overflow:hidden}
+
+/* ===== SIDEBAR ===== */
+.sidebar{width:380px;display:flex;flex-direction:column;border-right:1px solid var(--border);background:var(--bg-card);flex-shrink:0;overflow:hidden}
+.search-box{padding:12px 14px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#fff,var(--bg));position:relative}
+.search-wrap{position:relative;display:flex;align-items:center}
+.search-wrap svg{position:absolute;left:10px;color:var(--text-lighter)}
+.search-wrap input{width:100%;padding:10px 12px 10px 34px;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:inherit;background:#fff;transition:all 0.2s;outline:none;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.search-wrap input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(27,110,194,0.1)}
+/* Search dropdown */
+.search-dropdown{display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:#fff;border:1.5px solid var(--border);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.12);z-index:100;max-height:360px;overflow-y:auto;scrollbar-width:thin}
+.search-dropdown.open{display:block}
+.search-dropdown-section{padding:6px 0}
+.search-dropdown-section+.search-dropdown-section{border-top:1px solid var(--border-light)}
+.search-dropdown-header{padding:6px 14px 4px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-lighter);display:flex;align-items:center;gap:5px}
+.search-dropdown-item{padding:8px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .1s;border-radius:0}
+.search-dropdown-item:hover,.search-dropdown-item.kb-active{background:rgba(27,110,194,.06)}
+.search-dropdown-item-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.search-dropdown-item-icon.company{background:rgba(27,110,194,.08);color:var(--blue)}
+.search-dropdown-item-icon.ship{background:rgba(13,200,160,.08);color:var(--teal)}
+.search-dropdown-item-text{flex:1;min-width:0}
+.search-dropdown-item-name{font-size:.82rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.search-dropdown-item-sub{font-size:.68rem;color:var(--text-lighter);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.search-dropdown-item mark{background:rgba(27,110,194,.15);color:var(--blue);font-weight:700;border-radius:2px;padding:0 1px}
+.search-dropdown-empty{padding:16px;text-align:center;font-size:.78rem;color:var(--text-lighter)}
+
+/* Filtres */
+.filters-section{border-bottom:1px solid var(--border)}
+.filters-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:linear-gradient(135deg,var(--blue),var(--teal));border:none;font-family:inherit;font-size:0.82rem;font-weight:700;color:#fff;cursor:pointer;transition:all .15s}
+.filters-toggle:hover{filter:brightness(1.1)}
+.filters-toggle svg{stroke:#fff;transition:transform 0.2s}
+.filters-toggle.open svg{transform:rotate(180deg)}
+.active-filters-count{display:inline-flex;align-items:center;justify-content:center;background:var(--orange);color:#fff;font-size:0.65rem;font-weight:700;width:18px;height:18px;border-radius:50%;margin-left:4px}
+
+/* Filters popup */
+.filters-popup-backdrop{display:none;position:fixed;inset:0;z-index:10002;background:rgba(15,23,42,.5);align-items:center;justify-content:center}
+.filters-popup-backdrop.open{display:flex}
+.filters-popup{background:var(--bg-card);border-radius:12px;width:90vw;max-width:600px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.filters-popup-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.filters-popup-header span{font-size:1rem;font-weight:700;color:var(--text)}
+.filters-popup-close{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--bg-card);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text)}
+.filters-popup-body{flex:1;overflow-y:auto;padding:16px 20px}
+.filters-popup-footer{flex-shrink:0;padding:14px 20px;border-top:1px solid var(--border);background:var(--bg-card)}
+.filters-popup-footer button{width:100%;background:var(--blue);color:#fff;border:none;padding:13px;border-radius:10px;font-size:.88rem;font-weight:700;font-family:inherit;cursor:pointer;transition:background .15s}
+.filters-popup-footer button:hover{background:var(--blue-dark)}
+
+.filter-row{margin-bottom:10px}
+.filter-label{display:block;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:var(--text-light);margin-bottom:5px}
+.filter-select{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:5px;font-size:0.82rem;font-family:inherit;background:#fff;outline:none;cursor:pointer}
+.filter-select:focus{border-color:var(--blue)}
+.filter-chips{display:flex;flex-wrap:wrap;gap:5px}
+.filter-chip{padding:4px 10px;border:1px solid var(--border);border-radius:14px;font-size:0.73rem;font-weight:500;color:var(--text-light);cursor:pointer;transition:all 0.15s;user-select:none}
+.filter-chip:hover{border-color:var(--blue);color:var(--blue)}
+.filter-chip.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.filter-group{margin-bottom:6px}
+.filter-group-header{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--bg);border-radius:5px;cursor:pointer;font-size:0.75rem;font-weight:600;color:var(--text);transition:background 0.15s;user-select:none}
+.filter-group-header:hover{background:var(--border-light)}
+.filter-group-header svg{width:12px;height:12px;transition:transform 0.2s;flex-shrink:0;color:var(--text-lighter)}
+.filter-group-header.open svg{transform:rotate(90deg)}
+.filter-group-header .group-count{font-size:0.65rem;color:var(--text-lighter);font-weight:400;margin-left:auto}
+.filter-group-body{display:none;padding:6px 0 2px 8px}
+.filter-group-body.open{display:block}
+.filters-actions{padding-top:8px;border-top:1px solid var(--border-light)}
+.btn-reset{width:100%;padding:7px;background:none;border:1px solid var(--border);border-radius:5px;font-size:0.78rem;font-family:inherit;color:var(--text-light);cursor:pointer;transition:all 0.15s}
+.btn-reset:hover{border-color:#EF4444;color:#EF4444;background:rgba(239,68,68,0.04)}
+
+/* Liste croisiéristes */
+.cruise-list-header{padding:10px 14px;font-size:0.78rem;font-weight:600;color:var(--text-light);background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
+.cruise-list{flex:1;overflow-y:auto;padding:6px}
+.cruise-card{display:flex;gap:10px;padding:10px;border-radius:var(--radius);cursor:pointer;transition:all 0.15s;border:1px solid transparent;margin-bottom:4px;position:relative;border-left:3px solid transparent}
+.cruise-card:hover{background:var(--bg);border-color:var(--border);border-left-color:inherit;transform:translateY(-1px);box-shadow:0 3px 12px rgba(0,0,0,0.06)}
+.cruise-card.active{background:rgba(27,110,194,0.06);border-color:var(--blue);box-shadow:0 2px 10px rgba(27,110,194,0.12)}
+.cruise-card.type-maritime{border-left-color:var(--ct-maritime)}
+.cruise-card.type-fluviale{border-left-color:var(--ct-fluviale)}
+.cruise-card.type-expedition{border-left-color:var(--ct-expedition)}
+.cruise-card.type-luxe{border-left-color:var(--ct-luxe)}
+.cruise-card.type-voilier{border-left-color:var(--ct-voilier)}
+.cruise-card.type-polaire{border-left-color:var(--ct-polaire)}
+.cruise-card-img{width:70px;height:52px;border-radius:5px;object-fit:contain;flex-shrink:0;background:#fff;border:1px solid var(--border);padding:4px}
+.cruise-card-img-init{display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;color:var(--text-lighter);background:var(--bg)}
+.cruise-card-info{flex:1;min-width:0}
+.cruise-card-name{font-size:0.82rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cruise-card-zones{font-size:0.72rem;color:var(--text-light);margin-top:1px;line-height:1.3}
+.cruise-card-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.cruise-card-tag{font-size:0.62rem;padding:2px 8px;border-radius:10px;white-space:nowrap;font-weight:600}
+.cruise-card-tag.tag-gamme-standard{background:#E8F5E9;color:#2E7D32}
+.cruise-card-tag.tag-gamme-premium{background:#E3F2FD;color:#1565C0}
+.cruise-card-tag.tag-gamme-luxe{background:#FFF8E1;color:#F57F17}
+.cruise-card-tag.tag-gamme-ultra{background:#F3E5F5;color:#7B1FA2}
+.cruise-card-tag.tag-gamme-eco{background:#ECEFF1;color:#546E7A}
+.cruise-card-tag.tag-type{background:var(--bg);border:1px solid var(--border);color:var(--text-light)}
+.cruise-card-tag.tag-ships{background:var(--bg);border:1px solid var(--border);color:var(--text-light)}
+.cruise-card.sponsored{background:linear-gradient(135deg,rgba(212,168,67,0.06),rgba(232,145,58,0.04));border:2px solid var(--gold);border-left:3px solid var(--gold);position:relative}
+.cruise-card.sponsored .cruise-card-name{color:#9A7520}
+
+/* ===== MAP PANEL ===== */
+.map-panel{flex:1;position:relative;min-width:0}
+.map-reset-btn{position:absolute;top:80px;left:10px;z-index:1000;width:34px;height:34px;background:#fff;border:2px solid rgba(0,0,0,.2);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:#333;transition:background .15s}
+.map-reset-btn:hover{background:#f4f4f4}
+#mainMap{width:100%;height:100%;z-index:1}
+
+/* ===== MAP VIEW SWITCH ===== */
+.map-switch{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;background:#fff;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.15);overflow:hidden;border:1px solid var(--border)}
+.map-switch-btn{padding:8px 18px;font-size:0.78rem;font-weight:600;font-family:inherit;border:none;cursor:pointer;transition:all 0.15s;color:var(--text-light);background:#fff;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.map-switch-btn+.map-switch-btn{border-left:1px solid var(--border)}
+.map-switch-btn:hover{background:var(--bg)}
+.map-switch-btn.active{background:var(--navy);color:#fff}
+.map-switch-btn .switch-icon{font-size:0.9rem}
+.ship-live-dot{width:6px;height:6px;border-radius:50%;background:#22C55E;display:inline-block;animation:livePulse 1.5s ease-in-out infinite}
+@keyframes livePulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* ===== DETAIL PANEL ===== */
+.detail-panel{position:absolute;top:0;right:0;width:450px;height:100%;background:var(--bg-card);z-index:1001;transform:translateX(100%);transition:transform 0.25s ease;box-shadow:-4px 0 20px rgba(0,0,0,0.1);display:flex;flex-direction:column;overflow:hidden;touch-action:pan-y}
+.detail-panel.open{transform:translateX(0)}
+.detail-header{position:relative;flex-shrink:0}
+.detail-header img{width:100%;height:220px;object-fit:cover;object-position:top center;display:block}
+.detail-header .detail-close{position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);color:#fff;border:none;width:30px;height:30px;border-radius:50%;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.detail-body{flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain}
+.detail-title{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:4px}
+.detail-zones{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.detail-zone-badge{padding:3px 10px;background:var(--blue);color:#fff;border-radius:12px;font-size:0.72rem;font-weight:600}
+.detail-desc{font-size:0.82rem;color:var(--text-light);line-height:1.5;margin-bottom:14px}
+
+/* Contact commercial */
+.detail-contact{margin:14px 0;padding:14px;border:1px solid var(--border);border-radius:10px;background:linear-gradient(135deg,rgba(27,110,194,0.03),rgba(14,165,162,0.03))}
+.detail-contact-header{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--blue);margin-bottom:10px}
+.detail-contact-card{display:flex;gap:12px;align-items:center}
+.detail-contact-photo{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0}
+.detail-contact-photo-placeholder{width:52px;height:52px;border-radius:50%;background:var(--bg);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.detail-contact-info{flex:1;min-width:0}
+.detail-contact-name{font-size:0.85rem;font-weight:700;color:var(--text)}
+.detail-contact-role{font-size:0.72rem;color:var(--text-light)}
+.detail-contact-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.detail-contact-link{font-size:0.72rem;color:var(--blue);text-decoration:none;font-weight:600;display:flex;align-items:center;gap:3px}
+.detail-contact-link:hover{text-decoration:underline}
+
+/* Fleet / Ships */
+.detail-fleet{margin:14px 0}
+.detail-fleet-title{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--navy);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ship-card{display:flex;gap:10px;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:all 0.15s}
+.ship-card:hover{border-color:var(--blue);background:rgba(27,110,194,0.03)}
+.ship-card-img{width:80px;height:54px;border-radius:6px;object-fit:cover;flex-shrink:0;background:var(--border)}
+.ship-card-info{flex:1;min-width:0}
+.ship-card-name{font-size:0.8rem;font-weight:700;color:var(--text)}
+.ship-card-meta{font-size:0.7rem;color:var(--text-light);margin-top:2px}
+.ship-card-locate{font-size:0.65rem;color:var(--teal);font-weight:700;margin-top:4px;display:flex;align-items:center;gap:3px}
+.ship-card-locate .ship-live-dot{width:5px;height:5px}
+
+/* Ship detail popup */
+.ship-popup-bg{display:none;position:fixed;inset:0;z-index:10010;background:rgba(15,23,42,.6);align-items:center;justify-content:center;padding:20px}
+.ship-popup-bg.open{display:flex}
+.ship-popup{background:var(--bg-card);border-radius:14px;width:94vw;max-width:960px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden;position:relative}
+.ship-popup-header{display:flex;align-items:center;justify-content:space-between;padding:0;border-bottom:none;flex-shrink:0;position:absolute;top:0;left:0;right:0;z-index:10;pointer-events:none}
+.ship-popup-header span{display:none}
+.ship-popup-close{width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;pointer-events:auto;position:absolute;top:14px;right:14px;transition:background .15s}
+.ship-popup-close:hover{background:rgba(0,0,0,.7)}
+.ship-popup-scroll{flex:1;overflow-y:auto;padding:0;position:relative}
+/* Hero section */
+.ship-hero{position:relative;min-height:240px;background:linear-gradient(135deg,#0B1D33,#1a3a5c);overflow:hidden}
+.ship-hero img{width:100%;height:280px;object-fit:cover;display:block}
+.ship-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(10,20,35,0.88) 0%,rgba(10,20,35,0.3) 45%,rgba(10,20,35,0.05) 100%);pointer-events:none}
+.ship-hero-content{position:absolute;bottom:0;left:0;right:0;padding:20px 24px;z-index:2}
+.ship-hero-company{font-size:.7rem;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1.2px;font-weight:600;margin-bottom:4px}
+.ship-hero-name{font-size:1.35rem;font-weight:700;color:#fff;margin-bottom:10px;line-height:1.2}
+.ship-hero-badges{display:flex;flex-wrap:wrap;gap:6px}
+.ship-hero-badge{font-size:.65rem;padding:4px 11px;border-radius:20px;font-weight:600;display:inline-flex;align-items:center;gap:5px}
+.ship-hero-badge.badge-live{background:rgba(34,197,94,.2);color:#86efac;border:.5px solid rgba(34,197,94,.3)}
+.ship-hero-badge.badge-docked{background:rgba(100,116,139,.25);color:rgba(255,255,255,.8);border:.5px solid rgba(100,116,139,.3)}
+.ship-hero-badge.badge-type{background:rgba(255,255,255,.12);color:rgba(255,255,255,.8);border:.5px solid rgba(255,255,255,.12)}
+.ship-hero-badge.badge-owner{background:rgba(245,158,11,.2);color:#fcd34d;border:.5px solid rgba(245,158,11,.3)}
+.ship-hero-badge .live-dot{width:6px;height:6px;background:#22C55E;border-radius:50%;display:inline-block;animation:livePulse 1.5s ease-in-out infinite}
+/* Stats ribbon */
+.ship-stats-ribbon{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));border-bottom:1px solid var(--border)}
+.ship-stat-cell{padding:14px 10px;text-align:center;border-right:1px solid var(--border-light)}
+.ship-stat-cell:last-child{border-right:none}
+.ship-stat-cell .stat-icon{font-size:.85rem;color:var(--text-lighter);margin-bottom:3px}
+.ship-stat-cell .stat-value{font-size:1.05rem;font-weight:800;color:var(--navy)}
+.ship-stat-cell .stat-label{font-size:.58rem;color:var(--text-lighter);text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+/* Sections */
+.ship-section{padding:18px 24px}
+.ship-section+.ship-section{border-top:1px solid var(--border-light)}
+.ship-section-title{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-lighter);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.ship-section-title i{opacity:.6}
+.ship-section-desc{font-size:.84rem;color:var(--text-light);line-height:1.65}
+/* Amenity checklist */
+.ship-amenity-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.ship-amenity-row{display:flex;align-items:center;gap:8px;padding:7px 10px;font-size:.78rem;color:var(--text-light);border-bottom:1px solid var(--border-light);font-weight:500}
+.ship-amenity-row i{color:var(--teal)}
+.ship-amenity-row:nth-last-child(-n+2){border-bottom:none}
+/* Gallery tabs */
+.gallery-tabs-wrap{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff}
+.gallery-tabs{display:flex;border-bottom:1px solid var(--border)}
+.gallery-tab{flex:1;padding:10px 8px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;text-align:center;cursor:pointer;border:none;background:none;font-family:inherit;color:var(--text-light);position:relative;transition:color .15s;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px}
+.gallery-tab.active{color:var(--blue);background:rgba(27,110,194,.03)}
+.gallery-tab.active::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:2.5px;background:var(--blue);border-radius:2px 2px 0 0}
+.gallery-tab:hover:not(.active){color:var(--text);background:rgba(0,0,0,.015)}
+.gallery-tab .tab-count{font-size:.62rem;background:var(--border);color:var(--text-light);padding:1px 5px;border-radius:8px;font-weight:800}
+.gallery-tab.active .tab-count{background:rgba(27,110,194,.12);color:var(--blue)}
+.gallery-tab-panel{display:none;padding:12px}
+.gallery-tab-panel.active{display:block}
+/* Cabin cards */
+.cabin-card{border:1px solid var(--border-light);border-radius:8px;overflow:hidden;margin-bottom:10px;background:var(--bg)}
+.cabin-card:last-child{margin-bottom:0}
+.cabin-card-header{padding:10px 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.cabin-card-name{font-size:.82rem;font-weight:700;color:var(--text)}
+.cabin-card-meta{font-size:.68rem;color:var(--text-light);margin-top:2px}
+.cabin-card-surface{font-size:.72rem;font-weight:700;color:var(--blue);background:rgba(27,110,194,.08);padding:3px 8px;border-radius:6px;white-space:nowrap;flex-shrink:0}
+.cabin-card-desc{padding:0 12px 10px;font-size:.72rem;color:var(--text-light);line-height:1.5}
+.cabin-card-photos{display:flex;gap:4px;padding:0 10px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.cabin-card-photos::-webkit-scrollbar{display:none}
+.cabin-card-photos img{width:140px;height:95px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0;transition:transform .15s;border:1px solid var(--border-light)}
+.cabin-card-photos img:hover{transform:scale(1.04);border-color:var(--blue)}
+/* Common areas */
+.area-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.area-item{border-radius:8px;overflow:hidden;cursor:pointer;position:relative;height:140px}
+.area-item img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .15s}
+.area-item:hover img{transform:scale(1.05)}
+.area-item-label{position:absolute;bottom:0;left:0;right:0;padding:5px 8px;background:linear-gradient(transparent,rgba(0,0,0,.65));color:#fff;font-size:.68rem;font-weight:700}
+/* Deck plans grid */
+.deckplan-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.deckplan-item{border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;background:#fff;transition:border-color .15s;min-height:120px}
+.deckplan-item:hover{border-color:var(--blue)}
+.deckplan-item img{width:100%;display:block}
+.deckplan-item-label{padding:5px 8px;font-size:.65rem;font-weight:600;color:var(--text-light);text-align:center;border-top:1px solid var(--border-light)}
+/* Legacy flat gallery (fallback) */
+.ship-gallery{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:160px 110px;gap:5px}
+.ship-gallery-featured{grid-row:1/3;border-radius:8px;overflow:hidden;cursor:pointer;position:relative}
+.ship-gallery-featured img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
+.ship-gallery-featured:hover img{transform:scale(1.03)}
+.ship-gallery-thumb{border-radius:8px;overflow:hidden;cursor:pointer;position:relative}
+.ship-gallery-thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
+.ship-gallery-thumb:hover img{transform:scale(1.03)}
+.ship-gallery-more{position:absolute;inset:0;background:rgba(11,29,51,.6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;font-weight:700;cursor:pointer}
+/* Old classes kept for compatibility */
+.ship-popup-body{padding:0}
+.ship-popup-name{display:none}
+.ship-popup-stats{display:none}
+.ship-popup-desc{display:none}
+.ship-popup-photos{display:none}
+.ship-popup-hero{display:none}
+/* Lightbox */
+.lightbox-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;cursor:pointer;padding:20px}
+.lightbox-bg.open{opacity:1;pointer-events:auto}
+.lightbox-bg img{max-width:95%;max-height:90vh;object-fit:contain;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.5);transform:scale(.9);transition:transform .25s}
+.lightbox-bg.open img{transform:scale(1)}
+.lightbox-close{position:fixed;top:16px;right:20px;color:#fff;font-size:2rem;font-weight:700;cursor:pointer;z-index:100000;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.15);border-radius:50%;border:none;line-height:1}
+.lightbox-nav{position:fixed;top:50%;transform:translateY(-50%);color:#fff;font-size:2.5rem;cursor:pointer;z-index:100000;background:rgba(255,255,255,.15);border:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.lightbox-nav:hover{background:rgba(255,255,255,.3)}
+.lightbox-prev{left:16px}
+.lightbox-next{right:16px}
+.lightbox-counter{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.7);font-size:.82rem;font-weight:600;z-index:100000}
+
+/* CTA link */
+.detail-link{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;padding:13px 22px;background:linear-gradient(135deg,var(--blue),var(--teal));color:#fff;text-decoration:none;border-radius:10px;font-size:0.88rem;font-weight:700;transition:all 0.2s;width:100%;position:relative;overflow:hidden}
+.detail-link::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);transition:left .6s}
+.detail-link:hover::after{left:100%}
+.detail-link:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(27,110,194,0.3)}
+.detail-link.sponsored{background:linear-gradient(135deg,var(--gold),var(--orange))}
+.detail-link.sponsored:hover{box-shadow:0 4px 12px rgba(212,168,67,0.3)}
+.detail-panel.sponsored-active{box-shadow:-4px 0 0 0 var(--gold),0 4px 20px rgba(212,168,67,0.15)}
+
+/* News */
+.detail-news{margin:16px 0;padding:0;border:1px solid rgba(27,110,194,.15);border-radius:10px;overflow:hidden}
+.cruisenews-brand{font-size:.8rem;font-weight:800;letter-spacing:.5px;color:var(--blue);padding:10px 14px;background:linear-gradient(135deg,rgba(27,110,194,.06),rgba(27,110,194,.02));border-bottom:1px solid rgba(27,110,194,.12)}
+.cruisenews-tabs{display:flex;border-bottom:1px solid rgba(27,110,194,.12)}
+.cruisenews-tab{flex:1;padding:9px 10px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;text-align:center;cursor:pointer;border:none;background:none;font-family:inherit;color:var(--text-light);position:relative;transition:color .15s;white-space:nowrap}
+.cruisenews-tab.active{color:var(--blue)}
+.cruisenews-tab.active::after{content:'';position:absolute;bottom:0;left:14px;right:14px;height:2.5px;background:var(--blue);border-radius:2px 2px 0 0}
+.cruisenews-tab:hover:not(.active){color:var(--text)}
+.cruisenews-content{padding:12px 14px}
+.news-card{display:flex;gap:12px;padding:10px;background:#fff;border:1.5px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:all .2s}
+.news-card:hover{border-color:var(--blue);box-shadow:0 4px 12px rgba(27,110,194,.1);transform:translateY(-1px)}
+.news-card .news-img{width:90px;height:65px;object-fit:cover;border-radius:8px;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.news-card-body{flex:1;min-width:0}
+.news-card-title{font-size:.82rem;font-weight:700;color:var(--text);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.news-card-date{font-size:.7rem;color:var(--blue);font-weight:600;margin-top:4px}
+.news-card-read{font-size:.7rem;color:var(--blue);font-weight:700;margin-top:6px;display:inline-block}
+
+/* News all popup */
+.news-popup-bg{display:none;position:fixed;inset:0;z-index:10010;background:rgba(15,23,42,.6);align-items:center;justify-content:center;padding:20px}
+.news-popup-bg.open{display:flex}
+.news-popup{background:var(--bg-card);border-radius:12px;width:90vw;max-width:560px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden}
+.news-popup-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.news-popup-header span{font-size:.95rem;font-weight:700;color:var(--text)}
+.news-popup-close{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--bg-card);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text)}
+.news-popup-scroll{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+
+/* Event encart */
+.event-encart{margin:16px 0;border:2px solid var(--blue);border-radius:10px;overflow:hidden}
+.event-encart-img{width:100%;height:120px;object-fit:cover;display:block}
+.event-encart-body{padding:12px 14px}
+.event-encart-title{font-size:.82rem;font-weight:800;color:var(--text);margin-bottom:6px}
+.event-encart-text{font-size:.75rem;color:var(--text-light);line-height:1.5;margin-bottom:8px}
+.event-encart-stand{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:700;color:var(--blue);background:rgba(27,110,194,.08);padding:4px 10px;border-radius:6px;margin-bottom:10px}
+.event-encart-btn{display:block;width:100%;text-align:center;padding:10px;background:var(--blue);color:#fff;font-size:.8rem;font-weight:700;border-radius:8px;text-decoration:none;font-family:inherit;border:none;cursor:pointer;transition:background .15s}
+.event-encart-btn:hover{background:var(--blue-dark)}
+
+/* No results */
+.no-results{padding:40px 20px;text-align:center;color:var(--text-light)}
+.no-results p{font-size:0.85rem;margin-top:8px}
+
+/* ===== LEAFLET OVERRIDES ===== */
+.custom-marker{width:20px;height:20px;background:linear-gradient(135deg,var(--blue),var(--blue-light));border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:transform 0.15s,box-shadow 0.15s;position:relative;overflow:visible}
+.custom-marker:hover{transform:scale(1.5);box-shadow:0 4px 16px rgba(27,110,194,0.4)}
+/* River/fluvial markers */
+.custom-marker.river{background:linear-gradient(135deg,var(--ct-fluviale),#0DC8A0);border-radius:10px 10px 10px 2px;width:24px;height:20px}
+.custom-marker.river:hover{transform:scale(1.5);box-shadow:0 4px 16px rgba(14,165,162,0.4)}
+/* Zone name labels on markers */
+.marker-zone-label{position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);background:rgba(11,29,51,0.82);color:#fff;font-size:0.58rem;padding:2px 7px;border-radius:6px;white-space:nowrap;font-weight:600;pointer-events:none;letter-spacing:0.2px;line-height:1.3;box-shadow:0 1px 4px rgba(0,0,0,0.15)}
+.marker-zone-label.river-label{background:rgba(14,165,162,0.88);font-weight:700}
+/* Hide zone labels at low zoom */
+.zoom-labels-hidden .marker-zone-label{display:none}
+.custom-marker.charterer{background:linear-gradient(135deg,#F59E0B,#FB923C);border:2.5px dashed #fff;width:24px;height:24px;border-radius:50%;box-shadow:0 2px 8px rgba(245,158,11,0.45)}
+.custom-marker.charterer::before{content:'🤝';font-size:11px;line-height:18px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;filter:grayscale(.3) brightness(1.1)}
+.custom-marker.charterer:hover{transform:scale(1.4);box-shadow:0 4px 16px rgba(245,158,11,0.6)}
+.custom-marker.highlighted{width:24px;height:24px;background:var(--gold);border:3px solid #fff;box-shadow:0 0 0 4px rgba(212,168,67,0.3),0 2px 10px rgba(212,168,67,0.5);z-index:900!important;animation:highlightPulse 1.5s ease-in-out infinite}
+@keyframes highlightPulse{0%,100%{box-shadow:0 0 0 4px rgba(212,168,67,0.3),0 2px 10px rgba(212,168,67,0.5)}50%{box-shadow:0 0 0 8px rgba(212,168,67,0.15),0 2px 16px rgba(212,168,67,0.7)}}
+.custom-marker.sponsored{width:28px;height:28px;background:linear-gradient(135deg,var(--gold),var(--orange));border:3px solid #fff;box-shadow:0 0 0 3px rgba(212,168,67,0.3),0 2px 12px rgba(212,168,67,0.5);animation:sponsoredPulse 2s ease-in-out infinite;display:flex;align-items:center;justify-content:center}
+.custom-marker.sponsored::after{content:'★';color:#fff;font-size:12px;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,0.3)}
+.custom-marker.sponsored-logo{width:56px;height:56px;background:#fff;border:3px solid var(--gold);box-shadow:0 0 0 5px rgba(212,168,67,0.2),0 4px 20px rgba(212,168,67,0.4);animation:sponsoredPulse 2s ease-in-out infinite;padding:0;overflow:visible}
+.custom-marker.sponsored-logo::after{display:none}
+.custom-marker.sponsored-logo img{width:44px;height:44px;object-fit:contain;border-radius:50%;display:block;margin:3px;background:#fff}
+@keyframes sponsoredPulse{0%,100%{box-shadow:0 0 0 3px rgba(212,168,67,0.3),0 2px 12px rgba(212,168,67,0.5)}50%{box-shadow:0 0 0 6px rgba(212,168,67,0.15),0 2px 20px rgba(212,168,67,0.7)}}
+.sponsor-star{position:absolute;top:-5px;right:-5px;background:var(--gold);color:#fff;width:16px;height:16px;border-radius:50%;font-size:9px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.2);border:1.5px solid #fff}
+.marker-count{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);background:rgba(11,29,51,0.85);color:#fff;font-size:0.55rem;padding:1px 6px;border-radius:8px;white-space:nowrap;font-weight:600;pointer-events:none}
+
+/* Ship markers */
+.ship-marker{width:28px;height:28px;background:var(--teal);border:2px solid #fff;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:14px;transition:transform 0.15s;position:relative}
+.ship-marker:hover{transform:scale(1.3)}
+.ship-marker::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#22C55E;border-radius:50%;border:1.5px solid #fff;animation:livePulse 1.5s ease-in-out infinite}
+
+/* Cluster overrides — gradient style */
+.marker-cluster-small{background:radial-gradient(circle,rgba(27,110,194,0.15),rgba(27,110,194,0.05))}
+.marker-cluster-small div{background:linear-gradient(135deg,var(--blue),var(--teal))}
+.marker-cluster-medium{background:radial-gradient(circle,rgba(27,110,194,0.2),rgba(27,110,194,0.08))}
+.marker-cluster-medium div{background:linear-gradient(135deg,var(--blue),var(--teal))}
+.marker-cluster-large{background:radial-gradient(circle,rgba(27,110,194,0.3),rgba(27,110,194,0.1))}
+.marker-cluster-large div{background:linear-gradient(135deg,var(--blue-dark),var(--blue))}
+.marker-cluster div{color:#fff;font-weight:700;font-size:12px;width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:50%}
+
+/* Popup overrides */
+.leaflet-popup-content-wrapper{border-radius:14px!important;box-shadow:0 10px 40px rgba(0,0,0,0.18)!important;padding:0!important;overflow:hidden!important}
+.leaflet-popup-content{margin:0!important;min-width:220px;max-height:none!important;overflow:visible!important}
+.leaflet-popup-tip{box-shadow:0 3px 14px rgba(0,0,0,0.1)!important}
+.popup-inner{padding:0}
+.popup-banner{padding:12px 16px;color:#fff;border-radius:14px 14px 0 0}
+.popup-banner .popup-dest{font-weight:700;font-size:0.95rem;color:#fff}
+.popup-banner .popup-count{font-size:0.72rem;color:rgba(255,255,255,0.8);margin-top:2px}
+.popup-body{padding:10px 14px 14px}
+.popup-list-d{display:flex;flex-direction:column;gap:6px}
+.popup-list-d.popup-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.popup-mini{display:flex;align-items:center;gap:14px;padding:10px 12px;border-radius:10px;transition:all 0.15s;border:1px solid transparent}
+.popup-clickable:hover{background:rgba(27,110,194,0.04);border-color:var(--border)}
+.popup-logo{width:60px;height:60px;border-radius:10px;object-fit:contain;flex-shrink:0;border:2px solid var(--border);background:#fff;padding:6px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.popup-logo-init{width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,var(--bg),#e2e8f0);display:flex;align-items:center;justify-content:center;font-size:0.9rem;font-weight:800;color:var(--text-light);flex-shrink:0;border:2px solid var(--border)}
+.popup-name{font-size:0.88rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.popup-mini.sponsored{background:rgba(212,168,67,0.06);border:1px solid rgba(212,168,67,0.2);border-radius:10px}
+.popup-wide-wrap .leaflet-popup-content{min-width:440px}
+.popup-wide-wrap .popup-name{max-width:160px}
+
+/* Destination spot in sidebar */
+.dest-spot{display:none;background:#fff;overflow:hidden;animation:destSpotIn .25s ease;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.1);border-bottom:3px solid var(--blue);position:relative;z-index:2}
+.dest-spot.open{display:block}
+@keyframes destSpotIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.dest-spot-banner{padding:14px 16px 14px 16px;color:#fff;position:relative}
+.dest-spot-banner .dest-spot-type{font-size:.6rem;text-transform:uppercase;letter-spacing:.5px;opacity:.8;margin-bottom:2px}
+.dest-spot-banner .dest-spot-name{font-weight:700;font-size:1rem;padding-right:36px}
+.dest-spot-banner .dest-spot-count{font-size:.72rem;opacity:.8;margin-top:2px}
+.dest-spot-close{position:absolute;top:50%;right:12px;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;border:none;background:rgba(255,255,255,.25);color:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);transition:background .15s;z-index:5;line-height:1}
+.dest-spot-close:hover{background:rgba(255,255,255,.45)}
+.dest-spot-list{padding:10px 14px 14px;display:flex;flex-direction:column;gap:4px;max-height:240px;overflow-y:auto;scrollbar-width:thin}
+.dest-spot-item{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:all .15s;border:1px solid transparent}
+.dest-spot-item:hover{background:rgba(27,110,194,.04);border-color:var(--border)}
+.dest-spot-item.sponsored{background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.2)}
+.dest-spot-logo{width:42px;height:42px;border-radius:8px;object-fit:contain;flex-shrink:0;border:1.5px solid var(--border);background:#fff;padding:4px}
+.dest-spot-logo-init{width:42px;height:42px;border-radius:8px;background:linear-gradient(135deg,var(--bg),#e2e8f0);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:var(--text-light);flex-shrink:0;border:1.5px solid var(--border)}
+.dest-spot-company{font-size:.82rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Tooltip overrides for destination markers */
+.dest-tooltip{font-family:'Poppins',system-ui,sans-serif!important;font-size:.78rem!important;font-weight:600!important;padding:6px 12px!important;border-radius:8px!important;box-shadow:0 4px 16px rgba(0,0,0,.15)!important;border:1px solid rgba(0,0,0,.06)!important;white-space:nowrap!important}
+.dest-tooltip .leaflet-tooltip-arrow{display:none}
+
+/* Banner slot */
+.banner-slot{display:none;border-bottom:1px solid var(--border);position:relative;z-index:2;background:#fff;flex-shrink:0}
+.banner-content{max-width:100%;overflow:hidden}
+.banner-close{position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);color:#fff;border:none;width:22px;height:22px;border-radius:50%;font-size:0.7rem;cursor:pointer;z-index:3;display:flex;align-items:center;justify-content:center}
+
+/* Help button */
+.map-help-btn{position:absolute;bottom:16px;left:16px;z-index:10;width:36px;height:36px;border-radius:50%;background:#fff;border:1.5px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,0.1);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--blue);transition:all .15s}
+.map-help-btn:hover{background:var(--blue);color:#fff;border-color:var(--blue);transform:scale(1.1)}
+/* Help overlay */
+.help-overlay{position:fixed;inset:0;background:rgba(11,29,51,0.5);z-index:10000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:fadeIn .2s}.help-overlay.open{display:flex}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.help-card{background:#fff;border-radius:16px;max-width:480px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,0.2);overflow:hidden;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.help-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;background:linear-gradient(135deg,var(--blue),var(--teal));color:#fff}
+.help-close{background:rgba(255,255,255,0.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center}
+.help-body{padding:20px 24px;display:flex;flex-direction:column;gap:16px}
+.help-item{display:flex;gap:14px;align-items:flex-start}
+.help-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.help-item strong{font-size:.88rem;display:block;margin-bottom:2px}
+.help-item p{font-size:.78rem;color:var(--text-light);line-height:1.4;margin:0}
+.help-got-it{width:calc(100% - 48px);margin:0 24px 20px;padding:12px;background:linear-gradient(135deg,var(--blue),var(--teal));color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.help-got-it:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(27,110,194,0.4)}
+
+/* Toast notification */
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+.ship-popup-leaflet .leaflet-popup-content-wrapper{padding:0;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.18);overflow:visible}
+.ship-popup-leaflet .leaflet-popup-content{margin:0!important;padding:0!important;width:auto!important;overflow:visible}
+.ship-popup-leaflet .leaflet-popup-tip{border-top-color:#fff}
+.cruisemap-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);z-index:100000;padding:12px 24px;border-radius:10px;font-size:.85rem;font-weight:600;font-family:inherit;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.2);transition:transform .3s ease;pointer-events:none}
+.cruisemap-toast.visible{transform:translateX(-50%) translateY(0)}
+.cruisemap-toast.success{background:linear-gradient(135deg,var(--green),#16A34A)}
+.cruisemap-toast.error{background:linear-gradient(135deg,var(--red),#DC2626)}
+
+/* Map legend */
+.map-legend{position:absolute;bottom:16px;right:16px;z-index:10;background:#fff;border-radius:10px;padding:10px 14px;box-shadow:0 2px 10px rgba(0,0,0,0.12);border:1px solid var(--border);font-size:.7rem;display:flex;flex-direction:column;gap:6px}
+.map-legend-title{font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-light);margin-bottom:2px}
+.map-legend-item{display:flex;align-items:center;gap:8px;color:var(--text)}
+.map-legend-dot{width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.2);flex-shrink:0}
+.map-legend-dot.river{border-radius:6px 6px 6px 2px}
+
+/* Reviews / Avis agents */
+.reviews-section{margin:16px 0;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.reviews-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:linear-gradient(135deg,rgba(245,158,11,.06),rgba(245,158,11,.02));border-bottom:1px solid rgba(245,158,11,.15)}
+.reviews-title{font-size:.76rem;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--orange);display:flex;align-items:center;gap:6px}
+.reviews-avg{display:flex;align-items:center;gap:4px;font-size:.82rem;font-weight:700;color:var(--text)}
+.reviews-avg .stars{color:var(--orange);letter-spacing:1px}
+.reviews-count{font-size:.7rem;color:var(--text-lighter);font-weight:500}
+.review-card{padding:12px 14px;border-bottom:1px solid var(--border-light)}
+.review-card:last-child{border-bottom:none}
+.review-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.review-author{font-size:.8rem;font-weight:700;color:var(--text)}
+.review-agency{font-size:.7rem;color:var(--text-lighter);font-weight:500}
+.review-stars{color:var(--orange);font-size:.78rem;letter-spacing:1px}
+.review-date{font-size:.65rem;color:var(--text-lighter)}
+.review-text{font-size:.82rem;color:var(--text-light);line-height:1.5}
+.review-delete{background:none;border:none;color:var(--red);font-size:.7rem;cursor:pointer;padding:2px 6px;border-radius:4px;opacity:.6;transition:opacity .15s}
+.review-delete:hover{opacity:1;background:rgba(239,68,68,.08)}
+.review-empty{padding:16px 14px;text-align:center;font-size:.8rem;color:var(--text-lighter)}
+.review-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:11px;background:var(--orange);color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;margin-top:0}
+.review-btn:hover{background:#D97706;transform:translateY(-1px)}
+.review-btn:disabled{background:var(--border);color:var(--text-lighter);cursor:default;transform:none}
+.review-btn-locked{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:11px;background:var(--bg);color:var(--text-lighter);border:1.5px dashed var(--border);border-radius:8px;font-size:.78rem;font-weight:600;cursor:default;font-family:inherit}
+.review-form{padding:14px;border-top:1px solid var(--border-light);background:rgba(245,158,11,.03)}
+.review-form-stars{display:flex;gap:4px;margin-bottom:10px}
+.review-form-star{font-size:1.4rem;cursor:pointer;transition:transform .1s;filter:grayscale(1);opacity:.4}
+.review-form-star:hover{transform:scale(1.2)}
+.review-form-star.active{filter:none;opacity:1}
+.review-form textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem;font-family:inherit;resize:vertical;min-height:70px;outline:none;transition:border .2s}
+.review-form textarea:focus{border-color:var(--orange)}
+.review-form-actions{display:flex;gap:8px;margin-top:10px;justify-content:flex-end}
+.review-form-cancel{padding:8px 16px;background:none;border:1.5px solid var(--border);border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text-light)}
+.review-form-submit{padding:8px 16px;background:var(--orange);color:#fff;border:none;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
+.review-form-submit:hover{background:#D97706}
+
+/* ===== MOBILE ===== */
+@media(max-width:768px){
+  .modal-content{width:100vw;height:100vh;border-radius:0}
+  .sidebar{width:100%;height:45%;border-right:none;border-bottom:1px solid var(--border)}
+  .main-layout{flex-direction:column}
+  .detail-panel{width:100%;position:fixed;inset:0;height:100%;border-radius:0}
+  .map-switch{top:8px;font-size:0.7rem}
+  .map-switch-btn{padding:6px 12px;font-size:0.72rem}
+  .ship-popup{width:100vw;max-width:100vw;max-height:95vh;border-radius:14px 14px 0 0}
+  .ship-hero img{height:200px}
+  .ship-hero-name{font-size:1.1rem}
+  .ship-stats-ribbon{grid-template-columns:repeat(auto-fit,minmax(80px,1fr))}
+  .ship-stat-cell{padding:10px 6px}
+  .ship-stat-cell .stat-value{font-size:.9rem}
+  .ship-section{padding:14px 16px}
+  .ship-gallery{grid-template-rows:120px 80px}
+  .area-grid{grid-template-columns:1fr}
+  .area-item{height:110px}
+  .cabin-card-photos img{width:110px;height:75px}
+  .deckplan-grid{grid-template-columns:1fr}
+  .detail-panel{width:100%}
+}
+
+/* Loading states */
+@keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.map-loading{position:absolute;inset:0;z-index:800;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;transition:opacity .4s}
+.map-loading.hidden{opacity:0;pointer-events:none}
+.map-loading-inner{text-align:center}
+.map-loading-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+.map-loading-text{font-size:.82rem;font-weight:600;color:var(--text-light)}
+.skeleton-cards{display:flex;flex-direction:column;gap:6px;padding:6px}
+.skeleton-card{display:flex;gap:10px;padding:10px;border-radius:8px;background:var(--bg-card);border:1px solid var(--border-light)}
+.skeleton-img{width:52px;height:52px;border-radius:8px;background:linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%);background-size:200px 100%;animation:shimmer 1.2s infinite;flex-shrink:0}
+.skeleton-lines{flex:1;display:flex;flex-direction:column;gap:6px;justify-content:center}
+.skeleton-line{height:10px;border-radius:4px;background:linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%);background-size:200px 100%;animation:shimmer 1.2s infinite}
+.skeleton-line.w80{width:80%}
+.skeleton-line.w50{width:50%}
+.skeleton-line.w30{width:30%}
+</style>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+
+<!-- ===== EMBED CONTAINER ===== -->
+<div class="embed-container" id="embedContainer" onclick="openModal()">
+  <div class="embed-map" id="embedMap"></div>
+  <div class="embed-overlay">
+    <div class="embed-overlay-content">
+      <h2>🚢 Carte des Croisiéristes</h2>
+      <p>Trouvez votre compagnie de croisière</p>
+      <div class="embed-carousel" id="embedCarousel"></div>
+      <div class="embed-counter">
+        <span class="embed-counter-num" id="embedCount">0</span>
+        <span>compagnies référencées</span>
+      </div>
+      <button class="embed-btn">Explorer la carte</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL (full map) ===== -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal-content">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        🚢 CruiseMAP
+        <span class="topbar-count" id="topbarCount">0</span>
+      </div>
+      <button class="btn-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <!-- Banner slot -->
+    <div class="banner-slot" id="bannerSlot">
+      <button class="banner-close" onclick="closeBanner()">✕</button>
+      <div class="banner-content" id="bannerContent"></div>
+    </div>
+
+    <div class="main-layout">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="search-box">
+          <div class="search-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchInput" placeholder="Rechercher une compagnie ou un navire…" autocomplete="off">
+          </div>
+          <div class="search-dropdown" id="searchDropdown"></div>
+        </div>
+        <div class="filters-section">
+          <button class="filters-toggle" onclick="toggleFilters()">
+            <span>⚓ Filtres <span id="activeFiltersCount" style="display:none" class="active-filters-count">0</span></span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="dest-spot" id="destSpot"></div>
+        <div class="cruise-list-header" id="cruiseListHeader">0 croisiériste trouvé</div>
+        <div class="cruise-list" id="cruiseList">
+          <div class="skeleton-cards" id="skeletonCards">
+            <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-lines"><div class="skeleton-line w80"></div><div class="skeleton-line w50"></div><div class="skeleton-line w30"></div></div></div>
+            <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-lines"><div class="skeleton-line w80"></div><div class="skeleton-line w50"></div><div class="skeleton-line w30"></div></div></div>
+            <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-lines"><div class="skeleton-line w80"></div><div class="skeleton-line w50"></div><div class="skeleton-line w30"></div></div></div>
+            <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-lines"><div class="skeleton-line w80"></div><div class="skeleton-line w50"></div><div class="skeleton-line w30"></div></div></div>
+            <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-lines"><div class="skeleton-line w80"></div><div class="skeleton-line w50"></div><div class="skeleton-line w30"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div class="map-panel">
+        <!-- View switch -->
+        <div class="map-switch" id="mapSwitch">
+          <button class="map-switch-btn active" id="switchDestinations" onclick="switchMapMode('destinations')">
+            <span class="switch-icon">📍</span> Destinations
+          </button>
+          <button class="map-switch-btn" id="switchShips" onclick="switchMapMode('ships')">
+            <span class="switch-icon">🚢</span> Navires <span class="ship-live-dot"></span>
+          </button>
+          <button class="map-switch-btn" id="shipViewAllBtn" style="display:none" onclick="activeCruiseLine=null;document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));renderShipMarkers();">
+            <span class="switch-icon">📋</span> Liste
+          </button>
+        </div>
+        <button class="map-reset-btn" onclick="resetMapView()" title="Vue mondiale">🌍</button>
+        <button class="map-help-btn" onclick="openHelp()" title="Aide"><i data-lucide="help-circle" style="width:16px;height:16px"></i></button>
+        <div class="map-legend" id="mapLegend">
+          <div class="map-legend-title">📍 Destinations</div>
+          <div style="font-size:.62rem;color:var(--text-lighter);margin-bottom:6px;line-height:1.3">Chaque point = une zone de croisière</div>
+          <div class="map-legend-item"><div class="map-legend-dot" style="background:linear-gradient(135deg,var(--ct-maritime),var(--blue-light))"></div> Zone maritime</div>
+          <div class="map-legend-item"><div class="map-legend-dot river" style="background:linear-gradient(135deg,var(--ct-fluviale),#0DC8A0)"></div> Fleuve navigable</div>
+          <div class="map-legend-item"><div class="map-legend-dot" style="background:linear-gradient(135deg,var(--gold),var(--orange))"></div> Sponsorisé</div>
+        </div>
+        <div class="map-legend" id="mapLegendShips" style="display:none">
+          <div class="map-legend-title">🚢 Navires</div>
+          <div style="font-size:.62rem;color:var(--text-lighter);margin-bottom:6px;line-height:1.3">Position en temps réel (AIS)</div>
+          <div class="map-legend-item"><div style="width:18px;height:18px;background:#1B6EC2;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2);flex-shrink:0;position:relative"><div style="position:absolute;top:-2px;right:-2px;width:6px;height:6px;background:#22C55E;border-radius:50%;border:1px solid #fff"></div></div> En navigation</div>
+          <div class="map-legend-item"><div style="width:18px;height:18px;background:#64748b;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2);flex-shrink:0;position:relative"><div style="position:absolute;top:-2px;right:-2px;width:6px;height:6px;background:#22C55E;border-radius:50%;border:1px solid #fff"></div></div> À quai</div>
+          <div class="map-legend-item"><div class="map-legend-dot" style="background:linear-gradient(135deg,var(--ct-maritime),var(--blue-light))"></div> Zone de départ</div>
+        </div>
+        <div id="mainMap"></div>
+        <div class="map-loading" id="mapLoading">
+          <div class="map-loading-inner">
+            <div class="map-loading-spinner"></div>
+            <div class="map-loading-text">Chargement des compagnies…</div>
+          </div>
+        </div>
+        <!-- Detail panel -->
+        <div class="detail-panel" id="detailPanel">
+          <div class="detail-header" id="detailHeader"></div>
+          <div class="detail-body" id="detailBody"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters popup -->
+<div class="filters-popup-backdrop" id="filtersPopup" onclick="if(event.target===this)closeFiltersPopup()">
+  <div class="filters-popup">
+    <div class="filters-popup-header">
+      <span><i data-lucide="sliders-horizontal" style="width:16px;height:16px;display:inline-block;vertical-align:-3px;margin-right:6px"></i> Filtres</span>
+      <button class="filters-popup-close" onclick="closeFiltersPopup()">✕</button>
+    </div>
+    <div class="filters-popup-body">
+      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:6px"><i data-lucide="building-2" style="width:13px;height:13px"></i> Compagnie</div>
+      <div class="filter-row">
+        <label class="filter-label"><i data-lucide="ship" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Type de croisière</label>
+        <select class="filter-select" id="filterType" onchange="applyFilters()">
+          <option value="">Toutes les croisières</option>
+          <option value="Croisière maritime">Croisière maritime</option>
+          <option value="Croisière fluviale">Croisière fluviale</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <label class="filter-label"><i data-lucide="globe" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Zone géographique</label>
+        <select class="filter-select" id="filterZone" onchange="applyFilters()">
+          <option value="">Toutes les zones</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <label class="filter-label"><i data-lucide="gem" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Gamme</label>
+        <select class="filter-select" id="filterGamme" onchange="applyFilters()">
+          <option value="">Toutes les gammes</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <label class="filter-label"><i data-lucide="tags" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Thématiques & cible</label>
+        <div class="filter-chips" id="chipsSpecialites"></div>
+      </div>
+
+      <div style="border-top:2px solid var(--border);margin:16px 0;padding-top:14px">
+        <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--teal);margin-bottom:12px;display:flex;align-items:center;gap:6px"><i data-lucide="anchor" style="width:13px;height:13px"></i> Navire</div>
+      </div>
+      <div class="filter-row">
+        <label class="filter-label"><i data-lucide="map-pin" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Zone de navigation</label>
+        <div class="filter-chips" id="chipsShipZones">
+          <div class="filter-chip" data-zone="Rhin" onclick="this.classList.toggle('active');applyFilters()">Rhin</div>
+          <div class="filter-chip" data-zone="Danube" onclick="this.classList.toggle('active');applyFilters()">Danube</div>
+          <div class="filter-chip" data-zone="Seine" onclick="this.classList.toggle('active');applyFilters()">Seine</div>
+          <div class="filter-chip" data-zone="Rhône / Saône" onclick="this.classList.toggle('active');applyFilters()">Rhône / Saône</div>
+          <div class="filter-chip" data-zone="Douro" onclick="this.classList.toggle('active');applyFilters()">Douro</div>
+          <div class="filter-chip" data-zone="Loire" onclick="this.classList.toggle('active');applyFilters()">Loire</div>
+          <div class="filter-chip" data-zone="Elbe" onclick="this.classList.toggle('active');applyFilters()">Elbe</div>
+          <div class="filter-chip" data-zone="Mékong" onclick="this.classList.toggle('active');applyFilters()">Mékong</div>
+          <div class="filter-chip" data-zone="Nil" onclick="this.classList.toggle('active');applyFilters()">Nil</div>
+          <div class="filter-chip" data-zone="Garonne / Gironde" onclick="this.classList.toggle('active');applyFilters()">Garonne / Gironde</div>
+          <div class="filter-chip" data-zone="Pô / Venise" onclick="this.classList.toggle('active');applyFilters()">Pô / Venise</div>
+          <div class="filter-chip" data-zone="Moselle" onclick="this.classList.toggle('active');applyFilters()">Moselle</div>
+          <div class="filter-chip" data-zone="Canaux de France" onclick="this.classList.toggle('active');applyFilters()">Canaux de France</div>
+          <div class="filter-chip" data-zone="Méditerranée" onclick="this.classList.toggle('active');applyFilters()">Méditerranée</div>
+          <div class="filter-chip" data-zone="Adriatique" onclick="this.classList.toggle('active');applyFilters()">Adriatique</div>
+          <div class="filter-chip" data-zone="Afrique australe" onclick="this.classList.toggle('active');applyFilters()">Afrique australe</div>
+        </div>
+      </div>
+      <div class="filter-row">
+        <label class="filter-label"><i data-lucide="users" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Capacité</label>
+        <div class="filter-chips" id="chipsCapacity">
+          <div class="filter-chip" data-cap="small" onclick="toggleCapFilter(this)">Intimiste (&lt;100)</div>
+          <div class="filter-chip" data-cap="medium" onclick="toggleCapFilter(this)">Petit (100-300)</div>
+          <div class="filter-chip" data-cap="large" onclick="toggleCapFilter(this)">Moyen (300-1000)</div>
+          <div class="filter-chip" data-cap="xlarge" onclick="toggleCapFilter(this)">Grand (1000+)</div>
+        </div>
+      </div>
+      <div class="filter-row">
+        <label class="filter-label"><i data-lucide="sparkles" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Équipements à bord</label>
+        <div class="filter-chips" id="chipsAmenities"></div>
+      </div>
+      <div class="filter-row">
+        <label class="filter-label"><i data-lucide="calendar-check" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Navires récents</label>
+        <div class="filter-chips">
+          <div class="filter-chip" id="filterRecent" onclick="this.classList.toggle('active');applyFilters()">Mis en service après 2020</div>
+        </div>
+      </div>
+      <div class="filter-row">
+        <label class="filter-label"><i data-lucide="image" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Contenu disponible</label>
+        <div class="filter-chips">
+          <div class="filter-chip" id="filterPhotos" onclick="this.classList.toggle('active');applyFilters()">📸 Photos cabines</div>
+          <div class="filter-chip" id="filterDeckPlan" onclick="this.classList.toggle('active');applyFilters()">🗺️ Plan de pont</div>
+        </div>
+      </div>
+      <div class="filters-actions">
+        <button class="btn-reset" onclick="resetFilters()"><i data-lucide="rotate-ccw" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Réinitialiser les filtres</button>
+      </div>
+    </div>
+    <div class="filters-popup-footer">
+      <button onclick="closeFiltersPopup()"><i data-lucide="search" style="width:14px;height:14px;display:inline-block;vertical-align:-2px;margin-right:6px"></i> Voir les résultats</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ship detail popup -->
+<div class="ship-popup-bg" id="shipPopupBg" onclick="if(event.target===this)closeShipPopup()">
+  <div class="ship-popup">
+    <div class="ship-popup-header">
+      <span id="shipPopupTitle">Détail du navire</span>
+      <button class="ship-popup-close" onclick="closeShipPopup()">✕</button>
+    </div>
+    <div class="ship-popup-scroll" id="shipPopupScroll"></div>
+  </div>
+</div>
+
+<!-- Help overlay -->
+<div class="help-overlay" id="helpOverlay" onclick="if(event.target===this)closeHelp()">
+  <div class="help-card">
+    <div class="help-header">
+      <span style="font-size:1.1rem;font-weight:800">Comment utiliser CruiseMAP ?</span>
+      <button class="help-close" onclick="closeHelp()">✕</button>
+    </div>
+    <div class="help-body">
+      <div class="help-item"><div class="help-icon" style="background:var(--blue-light)"><i data-lucide="mouse-pointer-click" style="width:18px;height:18px;color:#fff"></i></div><div><strong>Explorez la carte</strong><p>Cliquez sur un point pour voir les compagnies présentes dans cette zone.</p></div></div>
+      <div class="help-item"><div class="help-icon" style="background:var(--teal)"><i data-lucide="filter" style="width:18px;height:18px;color:#fff"></i></div><div><strong>Filtrez les résultats</strong><p>Utilisez les filtres (type, zone, gamme, équipements) pour trouver la croisière idéale.</p></div></div>
+      <div class="help-item"><div class="help-icon" style="background:var(--purple)"><i data-lucide="ship" style="width:18px;height:18px;color:#fff"></i></div><div><strong>Découvrez les navires</strong><p>Cliquez sur une compagnie pour voir sa flotte, ses navires et leurs équipements.</p></div></div>
+      <div class="help-item"><div class="help-icon" style="background:var(--orange)"><i data-lucide="external-link" style="width:18px;height:18px;color:#fff"></i></div><div><strong>Visitez le site</strong><p>Le bouton en bas de la fiche vous emmène directement sur le site de la compagnie.</p></div></div>
+    </div>
+    <button class="help-got-it" onclick="closeHelp()">J'ai compris !</button>
+  </div>
+</div>
+
+<!-- News all popup -->
+<div class="news-popup-bg" id="newsPopupBg" onclick="if(event.target===this)closeAllNews()">
+  <div class="news-popup">
+    <div class="news-popup-header">
+      <span id="newsPopupTitle"></span>
+      <button class="news-popup-close" onclick="closeAllNews()">✕</button>
+    </div>
+    <div class="news-popup-scroll" id="newsPopupScroll"></div>
+  </div>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<!-- Lightbox -->
+<div class="lightbox-bg" id="lightboxBg" onclick="if(event.target===this)closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <button class="lightbox-nav lightbox-prev" onclick="event.stopPropagation();navigateLightbox(-1)">‹</button>
+  <img id="lightboxImg" src="" alt="">
+  <button class="lightbox-nav lightbox-next" onclick="event.stopPropagation();navigateLightbox(1)">›</button>
+  <div class="lightbox-counter" id="lightboxCounter"></div>
+</div>
+<script>
+// =====================================================================
+// FIREBASE CONFIG — à remplacer par ton propre projet Firebase
+// =====================================================================
+firebase.initializeApp({
+  apiKey: "AIzaSyD0IDzs56ush-JKp-fayC78jIKKVWEqZ6g",
+  authDomain: "cruisemap-c1d3a.firebaseapp.com",
+  projectId: "cruisemap-c1d3a",
+  storageBucket: "cruisemap-c1d3a.firebasestorage.app",
+  messagingSenderId: "15478571944",
+  appId: "1:15478571944:web:a9e7d62bd0d6f068b5139d"
+});
+const db = firebase.firestore();
+
+// =====================================================================
+// AGENT LOGIN API (pour le développeur TourMaG)
+// =====================================================================
+// L'objet CruiseMAP.agent est null par défaut (visiteur anonyme).
+// Le développeur appelle CruiseMAP.loginAgent({...}) quand un agent
+// de voyages est connecté sur le site TourMaG.
+// Exemple d'appel :
+//   CruiseMAP.loginAgent({
+//     id: 'agent_123',         // ID unique de l'agent dans le CMS TourMaG
+//     name: 'Marie Dupont',    // Prénom Nom
+//     agency: 'Voyages Martin',// Nom de l'agence
+//     email: 'marie@agence.fr' // Email (optionnel)
+//   });
+// Pour déconnecter : CruiseMAP.logoutAgent();
+
+window.CruiseMAP = window.CruiseMAP || {};
+CruiseMAP.agent = null;
+CruiseMAP.loginAgent = function(info) {
+  if (!info || !info.id || !info.name || !info.agency) {
+    console.error('CruiseMAP.loginAgent: id, name et agency sont requis');
+    return;
+  }
+  CruiseMAP.agent = { id: info.id, name: info.name, agency: info.agency, email: info.email || '' };
+  console.log('CruiseMAP: agent connecté —', info.name, '(' + info.agency + ')');
+  // Refresh les panneaux ouverts pour afficher les boutons d'avis
+  if (activeCruiseLine) {
+    const cl = allCruiseLines.find(c => c.id === activeCruiseLine);
+    if (cl) renderDetailPanel(cl);
+  }
+};
+CruiseMAP.logoutAgent = function() {
+  CruiseMAP.agent = null;
+  console.log('CruiseMAP: agent déconnecté');
+  if (activeCruiseLine) {
+    const cl = allCruiseLines.find(c => c.id === activeCruiseLine);
+    if (cl) renderDetailPanel(cl);
+  }
+};
+
+// Reviews cache
+let allReviews = {};
+
+async function loadReviews() {
+  try {
+    const snap = await db.collection('reviews_cruise').get();
+    allReviews = {};
+    snap.docs.forEach(d => {
+      const r = { id: d.id, ...d.data() };
+      const key = r.ship_id ? r.cruise_id + '_' + r.ship_id : r.cruise_id;
+      if (!allReviews[key]) allReviews[key] = [];
+      allReviews[key].push(r);
+    });
+    // Sort by date descending
+    Object.keys(allReviews).forEach(key => {
+      allReviews[key].sort((a, b) => ((b.created_at?.seconds || 0) - (a.created_at?.seconds || 0)));
+    });
+  } catch(e) { console.warn('Reviews load error:', e); allReviews = {}; }
+}
+
+function getReviews(cruiseId, shipId) {
+  const key = shipId ? cruiseId + '_' + shipId : cruiseId;
+  return allReviews[key] || [];
+}
+
+function getAllReviewsForCruise(cruiseId) {
+  const reviews = [];
+  Object.keys(allReviews).forEach(key => {
+    if (key === cruiseId || key.startsWith(cruiseId + '_')) {
+      reviews.push(...allReviews[key]);
+    }
+  });
+  return reviews;
+}
+
+function renderStars(rating) {
+  let s = '';
+  for (let i = 1; i <= 5; i++) s += i <= rating ? '★' : '☆';
+  return s;
+}
+
+function avgRating(reviews) {
+  if (!reviews.length) return 0;
+  return reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length;
+}
+
+function renderReviewsSection(cruiseId, shipId, shipName) {
+  return ''; // Avis agents masqués pour le moment
+  const reviews = shipId ? getReviews(cruiseId, shipId) : getReviews(cruiseId, null);
+  const agent = CruiseMAP.agent;
+  const avg = avgRating(reviews);
+  const target = shipId ? (shipName || 'ce navire') : 'cette compagnie';
+
+  let html = '<div class="reviews-section">';
+  html += '<div class="reviews-header">';
+  html += '<div class="reviews-title">⭐ Avis des agents de voyages</div>';
+  if (reviews.length > 0) {
+    html += '<div class="reviews-avg"><span class="stars">' + renderStars(Math.round(avg)) + '</span> ' + avg.toFixed(1) + '/5 <span class="reviews-count">(' + reviews.length + ' avis)</span></div>';
+  }
+  html += '</div>';
+
+  if (reviews.length === 0) {
+    html += '<div class="review-empty">Aucun avis pour le moment' + (agent ? '' : '') + '</div>';
+  } else {
+    reviews.forEach(r => {
+      const date = r.created_at ? new Date(r.created_at.seconds * 1000).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+      const canDelete = agent && agent.id === r.agent_id;
+      html += '<div class="review-card">';
+      html += '<div class="review-card-top"><div><span class="review-author">' + (r.agent_name || 'Agent') + '</span> <span class="review-agency">• ' + (r.agent_agency || '') + '</span></div><div style="display:flex;align-items:center;gap:8px"><span class="review-date">' + date + '</span>' + (canDelete ? '<button class="review-delete" onclick="deleteReview(\'' + r.id + '\',\'' + cruiseId + '\',\'' + (shipId || '') + '\')">🗑️</button>' : '') + '</div></div>';
+      html += '<div class="review-stars">' + renderStars(r.rating || 0) + '</div>';
+      if (r.text) html += '<div class="review-text">' + r.text.replace(/</g, '&lt;') + '</div>';
+      html += '</div>';
+    });
+  }
+
+  // Bouton ou formulaire
+  if (agent) {
+    const already = reviews.find(r => r.agent_id === agent.id);
+    if (already) {
+      html += '<div style="padding:10px 14px;font-size:.75rem;color:var(--text-lighter);text-align:center">Vous avez déjà donné votre avis</div>';
+    } else {
+      html += '<div style="padding:12px 14px"><button class="review-btn" onclick="openReviewForm(\'' + cruiseId + '\',\'' + (shipId || '') + '\',\'' + target.replace(/'/g, "\\'") + '\')">✍️ Donner mon avis sur ' + target + '</button></div>';
+    }
+  } else {
+    html += '<div style="padding:12px 14px"><div class="review-btn-locked">🔒 Connectez-vous sur TourMaG pour donner votre avis</div></div>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+let reviewFormState = { cruiseId: null, shipId: null, rating: 0 };
+
+function openReviewForm(cruiseId, shipId, targetLabel) {
+  reviewFormState = { cruiseId, shipId: shipId || null, rating: 0 };
+  const container = document.getElementById('reviewFormContainer_' + cruiseId + '_' + (shipId || 'company'));
+  if (!container) return;
+  container.innerHTML = '<div class="review-form">' +
+    '<div style="font-size:.82rem;font-weight:700;margin-bottom:10px">Votre avis sur ' + targetLabel + '</div>' +
+    '<div class="review-form-stars" id="reviewStars">' +
+    [1,2,3,4,5].map(i => '<span class="review-form-star" data-val="' + i + '" onclick="setReviewRating(' + i + ')">★</span>').join('') +
+    '</div>' +
+    '<textarea id="reviewText" placeholder="Partagez votre expérience… (optionnel)"></textarea>' +
+    '<div class="review-form-actions">' +
+    '<button class="review-form-cancel" onclick="closeReviewForm(\'' + cruiseId + '\',\'' + (shipId || '') + '\')">Annuler</button>' +
+    '<button class="review-form-submit" onclick="submitReview()">Publier mon avis</button>' +
+    '</div></div>';
+}
+
+function closeReviewForm(cruiseId, shipId) {
+  const container = document.getElementById('reviewFormContainer_' + cruiseId + '_' + (shipId || 'company'));
+  if (container) container.innerHTML = '';
+}
+
+function setReviewRating(val) {
+  reviewFormState.rating = val;
+  document.querySelectorAll('#reviewStars .review-form-star').forEach(s => {
+    s.classList.toggle('active', parseInt(s.dataset.val) <= val);
+  });
+}
+
+function showCruiseToast(msg, type='success') {
+  let el = document.getElementById('cruisemapToast');
+  if (!el) { el = document.createElement('div'); el.id = 'cruisemapToast'; el.className = 'cruisemap-toast'; document.body.appendChild(el); }
+  el.textContent = msg;
+  el.className = 'cruisemap-toast ' + type;
+  requestAnimationFrame(() => { el.classList.add('visible'); });
+  setTimeout(() => { el.classList.remove('visible'); }, 3000);
+}
+
+async function submitReview() {
+  const agent = CruiseMAP.agent;
+  if (!agent) return;
+  if (!reviewFormState.rating) { showCruiseToast('Veuillez donner une note (étoiles)', 'error'); return; }
+  const text = document.getElementById('reviewText') ? document.getElementById('reviewText').value.trim() : '';
+  const data = {
+    cruise_id: reviewFormState.cruiseId,
+    ship_id: reviewFormState.shipId || null,
+    agent_id: agent.id,
+    agent_name: agent.name,
+    agent_agency: agent.agency,
+    agent_email: agent.email || '',
+    rating: reviewFormState.rating,
+    text: text,
+    created_at: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try {
+    await db.collection('reviews_cruise').add(data);
+    showCruiseToast('✅ Votre avis a été publié !', 'success');
+    await loadReviews();
+    // Refresh display
+    if (activeCruiseLine) {
+      const cl = allCruiseLines.find(c => c.id === activeCruiseLine);
+      if (cl) renderDetailPanel(cl);
+    }
+    // If ship popup is open, refresh it too
+    if (document.getElementById('shipPopupBg').classList.contains('open')) {
+      if (activeCruiseLine && reviewFormState.shipId) {
+        openShipDetail(activeCruiseLine, reviewFormState.shipId);
+      }
+    }
+  } catch(e) { showCruiseToast('Erreur: ' + e.message, 'error'); }
+}
+
+async function deleteReview(reviewId, cruiseId, shipId) {
+  if (!confirm('Supprimer votre avis ?')) return;
+  try {
+    await db.collection('reviews_cruise').doc(reviewId).delete();
+    showCruiseToast('Avis supprimé', 'success');
+    await loadReviews();
+    if (activeCruiseLine) {
+      const cl = allCruiseLines.find(c => c.id === activeCruiseLine);
+      if (cl) renderDetailPanel(cl);
+    }
+    if (shipId && document.getElementById('shipPopupBg').classList.contains('open')) {
+      openShipDetail(cruiseId, shipId);
+    }
+  } catch(e) { alert('Erreur: ' + e.message); }
+}
+
+// =====================================================================
+// CONSTANTES & ÉTAT
+// =====================================================================
+const CRUISE_TYPES = ["Croisière maritime", "Croisière fluviale"];
+const GAMMES = ["Économique", "Standard", "Premium", "Luxe", "Ultra-luxe"];
+const ZONES_GEO = ["Alaska","Amérique du Sud","Antarctique","Arctique","Asie","Baltique","Caraïbes","Europe du Nord","Fjords","Galápagos","Méditerranée","Moyen-Orient","Océan Indien","Pacifique","Polynésie","Scandinavie","Tour du monde","Transatlantique"];
+const FLEUVES = ["Amazone","Danube","Douro","Loire","Mékong","Mississippi","Nil","Rhin","Rhône","Seine","Volga"];
+
+// Coordonnées par zone pour le positionnement sur la carte
+const ZONE_COORDS = {
+  "méditerranée": [38.0, 18.0],
+  "caraïbes": [18.0, -72.0],
+  "europe du nord": [58.0, 10.0],
+  "asie": [15.0, 105.0],
+  "alaska": [61.0, -150.0],
+  "océan indien": [-8.0, 65.0],
+  "transatlantique": [35.0, -35.0],
+  "amérique du sud": [-15.0, -60.0],
+  "antarctique": [-68.0, 0.0],
+  "arctique": [75.0, 20.0],
+  "pacifique": [-5.0, 170.0],
+  "tour du monde": [20.0, 0.0],
+  "nil & fleuves europe": [48.0, 12.0],
+  "nil": [26.0, 32.0],
+  "moyen-orient": [24.0, 50.0],
+  "polynésie": [-17.0, -149.0],
+  "scandinavie": [62.0, 15.0],
+  "baltique": [58.0, 22.0],
+  "grèce": [38.0, 24.0],
+  "croatie": [43.5, 16.0],
+  "égypte": [26.0, 30.0],
+  "norvège": [62.0, 8.0],
+  "islande": [65.0, -19.0],
+  "galápagos": [-0.5, -90.5],
+  "maldives": [3.2, 73.2],
+  "seychelles": [-4.7, 55.5],
+  "madagascar": [-18.8, 46.9],
+  "japon": [36.0, 138.0],
+  "australie": [-25.0, 134.0],
+  "nouvelle-zélande": [-41.0, 174.0],
+  "hawaï": [20.0, -156.0],
+  "hawaii": [20.0, -156.0],
+  "cuba": [21.5, -78.0],
+  "bahamas": [25.0, -77.4],
+  "bermudes": [32.3, -64.8],
+  "mexique": [23.6, -102.5],
+  "panama": [9.0, -79.5],
+  "costa rica": [10.0, -84.0],
+  "amazonie": [-3.5, -62.0],
+  "patagonie": [-48.0, -70.0],
+  "cap horn": [-55.0, -67.0],
+  "svalbard": [78.0, 16.0],
+  "groenland": [72.0, -40.0],
+  "fjords": [61.0, 7.0],
+  "danube": [47.5, 19.05],   // on the Danube at Budapest
+  "rhin": [50.94, 6.96],     // on the Rhine at Cologne
+  "rhône": [45.76, 4.83],    // on the Rhône at Lyon
+  "seine": [49.44, 1.08],    // on the Seine near Rouen
+  "douro": [41.14, -8.61],   // on the Douro at Porto
+  "mékong": [11.55, 104.92],  // on the Mekong at Phnom Penh
+  "nil": [25.7, 32.65],       // on the Nile at Luxor
+  "loire": [47.22, -1.55],    // on the Loire at Nantes
+  "amazone": [-3.5, -62.0],   // Amazon river
+  "mississippi": [29.95, -90.07], // at New Orleans
+  "volga": [56.33, 43.99]     // on the Volga at Nizhny Novgorod
+};
+
+// Zones that are rivers/fluvial (for marker differentiation)
+// River detection now uses cl.fleuves field instead of zone names
+
+// =====================================================================
+// LIGHTBOX
+// =====================================================================
+let lightboxPhotos = [];
+let lightboxIndex = 0;
+
+function openLightbox(photos, index) {
+  if (!photos || photos.length === 0) return;
+  lightboxPhotos = photos;
+  lightboxIndex = index || 0;
+  updateLightbox();
+  document.getElementById('lightboxBg').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  document.getElementById('lightboxBg').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function navigateLightbox(dir) {
+  lightboxIndex = (lightboxIndex + dir + lightboxPhotos.length) % lightboxPhotos.length;
+  updateLightbox();
+}
+
+function updateLightbox() {
+  document.getElementById('lightboxImg').src = lightboxPhotos[lightboxIndex];
+  document.getElementById('lightboxCounter').textContent = (lightboxIndex + 1) + ' / ' + lightboxPhotos.length;
+  document.querySelector('.lightbox-prev').style.display = lightboxPhotos.length > 1 ? '' : 'none';
+  document.querySelector('.lightbox-next').style.display = lightboxPhotos.length > 1 ? '' : 'none';
+}
+
+// Keyboard navigation for lightbox
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lightboxBg').classList.contains('open')) return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowLeft') navigateLightbox(-1);
+  if (e.key === 'ArrowRight') navigateLightbox(1);
+});
+
+// Gallery tab switching
+function switchGalleryTab(tabId, btn) {
+  const wrap = btn.closest('.gallery-tabs-wrap');
+  if (!wrap) return;
+  wrap.querySelectorAll('.gallery-tab').forEach(t => t.classList.remove('active'));
+  wrap.querySelectorAll('.gallery-tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const panel = wrap.querySelector(`.gallery-tab-panel[data-tab="${tabId}"]`);
+  if (panel) panel.classList.add('active');
+  if (window.lucide) lucide.createIcons();
+}
+
+let allCruiseLines = [];
+let filteredCruiseLines = [];
+let mainMap, embedMapInstance, markerClusterGroup;
+let markers = [];
+let shipMarkers = [];
+let activeCruiseLine = null;
+let currentMapMode = 'destinations'; // 'destinations' or 'ships'
+let liveShipPositions = {}; // MMSI → {lat, lng, speed, course, name, ...}
+
+// =====================================================================
+// POSITIONS NAVIRES EN TEMPS RÉEL
+// =====================================================================
+async function loadLiveShipPositions() {
+  try {
+    const snap = await db.collection('ship_positions').get();
+    liveShipPositions = {};
+    snap.docs.forEach(d => {
+      if (d.id.startsWith('_')) return; // Skip metadata docs
+      liveShipPositions[d.id] = d.data();
+    });
+    console.log('Live positions loaded:', Object.keys(liveShipPositions).length);
+    
+    // Injecter les positions live dans les navires correspondants
+    allCruiseLines.forEach(cl => {
+      (cl.ships || []).forEach(ship => {
+        // Match par MMSI si disponible
+        if (ship.mmsi) {
+          const live = liveShipPositions[ship.mmsi];
+          if (live && live.lat && live.lng) {
+            applyLivePosition(ship, live);
+            return;
+          }
+        }
+        // Fallback : match par nom de navire (normalisation : sans préfixes, en minuscules)
+        const normName = (n) => (n||'').toLowerCase().replace(/^(ms|mv|ss|sv|m\/s|m\/v)\s+/i,'').trim();
+        const shipNorm = normName(ship.name);
+        const liveByName = Object.values(liveShipPositions).find(p => 
+          normName(p.name) === shipNorm
+        );
+        if (liveByName && liveByName.lat && liveByName.lng) {
+          applyLivePosition(ship, liveByName);
+        }
+      });
+    });
+  } catch(e) { console.warn('Live positions load error:', e); }
+}
+
+function applyLivePosition(ship, live) {
+  ship.position_lat = live.lat;
+  ship.position_lng = live.lng;
+  ship.position_speed = live.speed || 0;
+  ship.position_course = live.course || 0;
+  ship.position_destination = live.destination || '';
+  ship.position_updated = live.timestamp || '';
+  ship.position_live = true;
+}
+
+// =====================================================================
+// COORDONNÉES
+// =====================================================================
+function ensureCoordinates(cl) {
+  const seen = new Set();
+  const computed = [];
+  [...(cl.zones || []), ...(cl.fleuves || [])].forEach(zone => {
+    const key = zone.toLowerCase().trim();
+    if (seen.has(key)) return;
+    seen.add(key);
+    const coord = ZONE_COORDS[key];
+    if (coord) {
+      computed.push({ lat: coord[0], lng: coord[1], zone: zone });
+    }
+  });
+  cl.coordinates = computed;
+}
+
+// =====================================================================
+// CHARGEMENT DEPUIS FIRESTORE
+// =====================================================================
+async function loadData() {
+  try {
+    // Load public map settings (which cruise types to show)
+    let visibleTypes = null;
+    try {
+      const settDoc = await db.collection('settings_cruise').doc('public_map').get();
+      if (settDoc.exists && settDoc.data().visible_cruise_types) {
+        visibleTypes = new Set(settDoc.data().visible_cruise_types);
+      }
+    } catch(e) { /* no settings = show all */ }
+
+    const snap = await db.collection('cruiseLines').get();
+    allCruiseLines = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(d => d.status !== 'draft');
+
+    // --- DATA MIGRATION (front) ---
+    const TYPE_MIGRATE={'Croisière expédition':1,'Croisière de luxe':1,'Croisière voilier':1,'Croisière polaire':1};
+    const FLEUVE_SET_F=new Set(FLEUVES.map(f=>f.toLowerCase()));
+    allCruiseLines.forEach(cl => {
+      if(cl.cruise_types) cl.cruise_types = cl.cruise_types.filter(t => !TYPE_MIGRATE[t]);
+      if(cl.zones && cl.zones.includes('Nil & Fleuves Europe')){
+        cl.zones = cl.zones.filter(z => z !== 'Nil & Fleuves Europe');
+        if(!cl.fleuves) cl.fleuves=[];
+        if(!cl.fleuves.includes('Nil')) cl.fleuves.push('Nil');
+      }
+      // Move river names from zones to fleuves
+      if(cl.zones){
+        const rivers=cl.zones.filter(z=>FLEUVE_SET_F.has(z.toLowerCase()));
+        if(rivers.length){
+          if(!cl.fleuves)cl.fleuves=[];
+          rivers.forEach(r=>{if(!cl.fleuves.includes(r))cl.fleuves.push(r)});
+          cl.zones=cl.zones.filter(z=>!FLEUVE_SET_F.has(z.toLowerCase()));
+        }
+      }
+    });
+
+    // Filter by visible cruise types (if settings exist)
+    if (visibleTypes) {
+      allCruiseLines = allCruiseLines.filter(cl => {
+        const types = cl.cruise_types || [];
+        return types.length === 0 || types.some(t => visibleTypes.has(t));
+      });
+    }
+
+    // Charger les navires pour chaque compagnie
+    for (const cl of allCruiseLines) {
+      try {
+        const shipSnap = await db.collection('cruiseLines').doc(cl.id).collection('ships').get();
+        cl.ships = shipSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(s => s.status !== 'draft');
+      } catch(e) { cl.ships = []; }
+    }
+
+    // ── Resolve ship references: merge data from linked source ships ──
+    const allShipMap = new Map();
+    allCruiseLines.forEach(cl => (cl.ships || []).forEach(s => {
+      if (s.id) allShipMap.set(cl.id + '/' + s.id, s);
+    }));
+    allCruiseLines.forEach(cl => (cl.ships || []).forEach(ship => {
+      if (!ship.ref_company_id || !ship.ref_ship_id) return;
+      const src = allShipMap.get(ship.ref_company_id + '/' + ship.ref_ship_id);
+      if (!src) return;
+      // Merge missing fields from source (never overwrite existing data)
+      ['capacity','cabins','crew','length','tonnage','year','imo','image','description'].forEach(k => {
+        if ((ship[k] === undefined || ship[k] === null || ship[k] === '') && src[k] != null && src[k] !== '') ship[k] = src[k];
+      });
+      ['photos','deck_plans','cabins_detail','common_areas','amenities'].forEach(k => {
+        if ((!ship[k] || ship[k].length === 0) && src[k] && src[k].length > 0) ship[k] = [...src[k]];
+      });
+      if (!ship.deck_plan && src.deck_plan) ship.deck_plan = src.deck_plan;
+    }));
+
+    allCruiseLines.forEach(ensureCoordinates);
+    filteredCruiseLines = [...allCruiseLines].sort((a, b) => (a.title || '').localeCompare(b.title || '', 'fr'));
+    buildFilters();
+    buildShipIndex();
+    renderList();
+    renderMarkers();
+    updateCount();
+    initEmbedMap();
+    loadBanner();
+    try { await loadReviews(); } catch(e) { console.warn('Reviews not loaded:', e); }
+    try { await loadLiveShipPositions(); } catch(e) { console.warn('Live positions not loaded:', e); }
+    checkFirstVisit();
+    if(window.lucide)lucide.createIcons();
+    // Hide loading states
+    var ml = document.getElementById('mapLoading'); if (ml) ml.classList.add('hidden');
+  } catch(e) {
+    console.error('Erreur chargement données CruiseMAP:', e);
+    document.getElementById('cruiseList').innerHTML = '<div class="no-results"><p>Erreur de chargement des données.</p></div>';
+    var ml = document.getElementById('mapLoading'); if (ml) ml.classList.add('hidden');
+  }
+}
+
+async function loadBanner() {
+  try {
+    const snap = await db.collection('banners_cruise').where('active', '==', true).get();
+    if (snap.empty) return;
+    const now = new Date();
+    const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    const banner = snap.docs.map(d => d.data()).find(b => {
+      if (b.date_start && b.date_start > today) return false;
+      if (b.date_end && b.date_end < today) return false;
+      return true;
+    });
+    if (!banner) return;
+    var viewportWidth = screen.width || window.innerWidth;
+    try { if (window.parent && window.parent.innerWidth) viewportWidth = window.parent.innerWidth; } catch(e) {}
+    const isMobile = viewportWidth < 768;
+    const html = isMobile ? banner.html_mobile : banner.html_desktop;
+    if (!html || !html.trim()) return;
+    const slot = document.getElementById('bannerSlot');
+    const content = document.getElementById('bannerContent');
+    content.innerHTML = html;
+    content.querySelectorAll('img').forEach(img => { img.style.maxWidth = '100%'; img.style.width = '100%'; img.style.height = 'auto'; img.style.display = 'block'; });
+    content.querySelectorAll('img[width="1"], img[height="1"]').forEach(img => { img.style.display = 'none'; });
+    content.querySelectorAll('div').forEach(div => { div.style.maxWidth = '100%'; });
+    slot.style.display = 'block';
+    setTimeout(() => { if (mainMap) mainMap.invalidateSize(); }, 200);
+  } catch(e) { console.error('Erreur chargement bannière:', e); }
+}
+
+function closeBanner() {
+  document.getElementById('bannerSlot').style.display = 'none';
+  setTimeout(() => { if (mainMap) mainMap.invalidateSize(); }, 100);
+}
+
+// =====================================================================
+// FILTRES
+// =====================================================================
+function buildFilters() {
+  const types = new Set();
+  const zones = new Set();
+  const gammes = new Set();
+  const specs = new Map();
+
+  const fleuves = new Set();
+
+  allCruiseLines.forEach(cl => {
+    (cl.cruise_types || []).forEach(t => types.add(t));
+    (cl.zones || []).forEach(z => zones.add(z));
+    (cl.fleuves || []).forEach(f => fleuves.add(f));
+    if (cl.gamme) gammes.add(cl.gamme);
+    (cl.specialites || []).forEach(s => specs.set(s.id || s, s.label || s));
+  });
+
+  // Type filter is now hardcoded in HTML — skip dynamic population
+
+  const selZone = document.getElementById('filterZone');
+  if ([...zones].length > 0) {
+    const grpZones = document.createElement('optgroup');
+    grpZones.label = '🌍 Zones géographiques';
+    [...zones].sort((a,b) => a.localeCompare(b,'fr')).forEach(z => { const o = document.createElement('option'); o.value = z; o.textContent = z; grpZones.appendChild(o); });
+    selZone.appendChild(grpZones);
+  }
+  if ([...fleuves].length > 0) {
+    const grpFleuves = document.createElement('optgroup');
+    grpFleuves.label = '〰 Fleuves';
+    [...fleuves].sort((a,b) => a.localeCompare(b,'fr')).forEach(f => { const o = document.createElement('option'); o.value = f; o.textContent = f; grpFleuves.appendChild(o); });
+    selZone.appendChild(grpFleuves);
+  }
+
+  const selGamme = document.getElementById('filterGamme');
+  [...gammes].sort().forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; selGamme.appendChild(o); });
+
+  // Specialites chips
+  const chipsContainer = document.getElementById('chipsSpecialites');
+  [...specs.entries()].sort((a,b) => a[1].localeCompare(b[1],'fr')).forEach(([id, label]) => {
+    const chip = document.createElement('div');
+    chip.className = 'filter-chip';
+    chip.dataset.tagId = id;
+    chip.textContent = label;
+    chip.onclick = () => { chip.classList.toggle('active'); applyFilters(); };
+    chipsContainer.appendChild(chip);
+  });
+
+  // Amenity chips — normalized grouping
+  const AMENITY_GROUPS = [
+    { label: 'Restaurant', keywords: ['restaurant','dining','cuisine','gastronomie'] },
+    { label: 'Piscine', keywords: ['piscine','pool','nage','bassin'] },
+    { label: 'Spa / Massage', keywords: ['spa','massage','bien-être','bien être','wellness'] },
+    { label: 'Fitness', keywords: ['fitness','gym','sport','remise en forme'] },
+    { label: 'Bar / Lounge', keywords: ['bar','lounge','salon-bar','salon bar'] },
+    { label: 'Jacuzzi', keywords: ['jacuzzi','bain à remous','whirlpool'] },
+    { label: 'Bibliothèque', keywords: ['bibliothèque','library','lecture','livres'] },
+    { label: 'Boutique', keywords: ['boutique','shop','gift'] },
+    { label: 'Wi-Fi', keywords: ['wi-fi','wifi','internet','accès internet'] },
+    { label: 'Ascenseur', keywords: ['ascenseur','elevator','lift'] },
+    { label: 'Pont Soleil', keywords: ['pont soleil','sun deck','sundeck','soleil','transats','chaises longues'] },
+    { label: 'Coiffeur', keywords: ['coiffeur','hair','salon de coiffure'] },
+    { label: 'Réception', keywords: ['réception','reception','accueil'] }
+  ];
+
+  // Count which groups are represented
+  const groupCounts = {};
+  AMENITY_GROUPS.forEach(g => { groupCounts[g.label] = 0; });
+  allCruiseLines.forEach(cl => (cl.ships||[]).forEach(s => {
+    const amenStr = (s.amenities||[]).join(' ').toLowerCase();
+    AMENITY_GROUPS.forEach(g => {
+      if (g.keywords.some(kw => amenStr.includes(kw))) groupCounts[g.label]++;
+    });
+  }));
+
+  const amenContainer = document.getElementById('chipsAmenities');
+  if (amenContainer) {
+    AMENITY_GROUPS
+      .filter(g => groupCounts[g.label] > 0)
+      .sort((a,b) => groupCounts[b.label] - groupCounts[a.label])
+      .forEach(g => {
+        const chip = document.createElement('div');
+        chip.className = 'filter-chip';
+        chip.dataset.amenity = g.label;
+        chip.dataset.keywords = g.keywords.join('|');
+        chip.textContent = g.label;
+        chip.onclick = () => { chip.classList.toggle('active'); applyFilters(); };
+        amenContainer.appendChild(chip);
+      });
+  }
+}
+
+// =====================================================================
+// SHIP-LEVEL FILTER HELPERS
+// =====================================================================
+function hasActiveShipFilters() {
+  return document.querySelectorAll('#chipsCapacity .filter-chip.active').length > 0
+    || document.querySelectorAll('#chipsAmenities .filter-chip.active').length > 0
+    || document.querySelectorAll('#chipsShipZones .filter-chip.active').length > 0
+    || (document.getElementById('filterRecent') && document.getElementById('filterRecent').classList.contains('active'))
+    || (document.getElementById('filterPhotos') && document.getElementById('filterPhotos').classList.contains('active'))
+    || (document.getElementById('filterDeckPlan') && document.getElementById('filterDeckPlan').classList.contains('active'));
+}
+
+function shipMatchesFilters(ship, cl) {
+  // Zone filter — match only on ship-level zones (no company fallback)
+  const activeZones = [...document.querySelectorAll('#chipsShipZones .filter-chip.active')].map(c => c.dataset.zone);
+  if (activeZones.length > 0) {
+    const shipZones = ship.ship_zones || [];
+    if (!shipZones.length) return false; // No zones on this ship = excluded
+    if (!activeZones.some(az => shipZones.some(sz => sz === az))) return false;
+  }
+  const activeCaps = [...document.querySelectorAll('#chipsCapacity .filter-chip.active')].map(c => c.dataset.cap);
+  if (activeCaps.length > 0) {
+    const cap = ship.capacity || 0;
+    if (!activeCaps.some(c => (c==='small'&&cap<100)||(c==='medium'&&cap>=100&&cap<=300)||(c==='large'&&cap>300&&cap<=1000)||(c==='xlarge'&&cap>1000))) return false;
+  }
+  const activeAmenityChips = [...document.querySelectorAll('#chipsAmenities .filter-chip.active')];
+  if (activeAmenityChips.length > 0) {
+    const amenStr = (ship.amenities || []).join(' ').toLowerCase();
+    if (!activeAmenityChips.every(chip => {
+      const kws = (chip.dataset.keywords || '').split('|');
+      return kws.some(kw => amenStr.includes(kw));
+    })) return false;
+  }
+  if (document.getElementById('filterRecent') && document.getElementById('filterRecent').classList.contains('active')) {
+    const m = String(ship.year||'').match(/\d{4}/);
+    if (!m || parseInt(m[0]) < 2020) return false;
+  }
+  if (document.getElementById('filterPhotos') && document.getElementById('filterPhotos').classList.contains('active')) {
+    if (!((ship.cabins_detail && ship.cabins_detail.length > 0) || (ship.common_areas && ship.common_areas.length > 0))) return false;
+  }
+  if (document.getElementById('filterDeckPlan') && document.getElementById('filterDeckPlan').classList.contains('active')) {
+    if (!((ship.deck_plans && ship.deck_plans.length > 0) || ship.deck_plan)) return false;
+  }
+  return true;
+}
+
+function applyFilters() {
+  const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+  const type = document.getElementById('filterType').value;
+  const zone = document.getElementById('filterZone').value;
+  const gamme = document.getElementById('filterGamme').value;
+  const activeSpecs = [...document.querySelectorAll('#chipsSpecialites .filter-chip.active')].map(c => c.dataset.tagId);
+  const activeAmenities = [...document.querySelectorAll('#chipsAmenities .filter-chip.active')].map(c => c.dataset.amenity);
+  const activeCaps = [...document.querySelectorAll('#chipsCapacity .filter-chip.active')].map(c => c.dataset.cap);
+  const recentOnly = document.getElementById('filterRecent') && document.getElementById('filterRecent').classList.contains('active');
+
+  filteredCruiseLines = allCruiseLines.filter(cl => {
+    if (search) {
+      const hay = [cl.title, ...(cl.zones||[]), ...(cl.fleuves||[]), ...(cl.cruise_types||[]), cl.description||''].join(' ').toLowerCase();
+      const shipHay = (cl.ships||[]).map(s => (s.name||'').toLowerCase()).join(' ');
+      if (!hay.includes(search) && !shipHay.includes(search)) return false;
+    }
+    if (type && !(cl.cruise_types||[]).includes(type)) return false;
+    if (zone && !(cl.zones||[]).includes(zone) && !(cl.fleuves||[]).includes(zone)) return false;
+    if (gamme && cl.gamme !== gamme) return false;
+    if (activeSpecs.length > 0) {
+      const clSpecs = (cl.specialites||[]).map(s => s.id || s);
+      if (!activeSpecs.every(id => clSpecs.includes(id))) return false;
+    }
+    // Ship filters — check if at least one ship matches
+    const ships = cl.ships || [];
+    if (activeCaps.length > 0) {
+      const capMatch = ships.some(s => {
+        const cap = s.capacity || 0;
+        return activeCaps.some(c => (c==='small'&&cap<100)||(c==='medium'&&cap>=100&&cap<=300)||(c==='large'&&cap>300&&cap<=1000)||(c==='xlarge'&&cap>1000));
+      });
+      if (!capMatch) return false;
+    }
+    // Zone filter — at least one ship must have the selected zone in ship_zones
+    const activeZoneChips = [...document.querySelectorAll('#chipsShipZones .filter-chip.active')].map(c => c.dataset.zone);
+    if (activeZoneChips.length > 0) {
+      const zoneMatch = ships.some(s => {
+        const sZones = s.ship_zones || [];
+        return sZones.length > 0 && activeZoneChips.some(az => sZones.includes(az));
+      });
+      if (!zoneMatch) return false;
+    }
+    if (activeAmenities.length > 0) {
+      // Normalized matching: each active chip has keywords
+      const activeChips = [...document.querySelectorAll('#chipsAmenities .filter-chip.active')];
+      const amenMatch = ships.some(s => {
+        const amenStr = (s.amenities || []).join(' ').toLowerCase();
+        return activeChips.every(chip => {
+          const kws = (chip.dataset.keywords || '').split('|');
+          return kws.some(kw => amenStr.includes(kw));
+        });
+      });
+      if (!amenMatch) return false;
+    }
+    if (recentOnly) {
+      const hasRecent = ships.some(s => { const m = String(s.year||'').match(/\d{4}/); return m && parseInt(m[0]) >= 2020; });
+      if (!hasRecent) return false;
+    }
+    // Filter: has cabin photos
+    const photosOnly = document.getElementById('filterPhotos') && document.getElementById('filterPhotos').classList.contains('active');
+    if (photosOnly) {
+      const hasPhotos = ships.some(s => (s.cabins_detail && s.cabins_detail.length > 0) || (s.common_areas && s.common_areas.length > 0));
+      if (!hasPhotos) return false;
+    }
+    // Filter: has deck plan
+    const deckPlanOnly = document.getElementById('filterDeckPlan') && document.getElementById('filterDeckPlan').classList.contains('active');
+    if (deckPlanOnly) {
+      const hasPlan = ships.some(s => (s.deck_plans && s.deck_plans.length > 0) || s.deck_plan);
+      if (!hasPlan) return false;
+    }
+    return true;
+  });
+
+  filteredCruiseLines.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'fr'));
+  renderList();
+  renderMarkers();
+  updateCount();
+  updateActiveFiltersCount();
+}
+
+function toggleCapFilter(el) { el.classList.toggle('active'); applyFilters(); }
+
+function updateActiveFiltersCount() {
+  let count = 0;
+  if (document.getElementById('filterType').value) count++;
+  if (document.getElementById('filterZone').value) count++;
+  if (document.getElementById('filterGamme').value) count++;
+  document.querySelectorAll('.filter-chip.active').forEach(() => count++);
+  const badge = document.getElementById('activeFiltersCount');
+  if (count > 0) { badge.style.display = ''; badge.textContent = count; }
+  else { badge.style.display = 'none'; }
+}
+
+function resetFilters() {
+  document.getElementById('searchInput').value = '';
+  hideSearchDropdown();
+  document.getElementById('filterType').value = '';
+  document.getElementById('filterZone').value = '';
+  document.getElementById('filterGamme').value = '';
+  document.querySelectorAll('.filter-chip.active').forEach(c => c.classList.remove('active'));
+  const recent = document.getElementById('filterRecent');
+  if (recent) recent.classList.remove('active');
+  const fp = document.getElementById('filterPhotos');
+  if (fp) fp.classList.remove('active');
+  const fdp = document.getElementById('filterDeckPlan');
+  if (fdp) fdp.classList.remove('active');
+  applyFilters();
+}
+
+function toggleFilters() { document.getElementById('filtersPopup').classList.add('open'); }
+function closeFiltersPopup() { document.getElementById('filtersPopup').classList.remove('open'); applyFilters(); }
+
+// =====================================================================
+// SEARCH DROPDOWN (compagnies + navires)
+// =====================================================================
+let allShipsIndex = []; // [{name, companyTitle, companyId, shipIdx, year, capacity}]
+let searchDropdownItems = [];
+let kbIndex = -1;
+
+function buildShipIndex() {
+  allShipsIndex = [];
+  allCruiseLines.forEach(cl => {
+    (cl.ships || []).forEach(s => {
+      allShipsIndex.push({
+        name: s.name || '',
+        nameLower: (s.name || '').toLowerCase(),
+        companyTitle: cl.title || '',
+        companyId: cl.id,
+        shipId: s.id,
+        year: s.year || '',
+        capacity: s.capacity || 0
+      });
+    });
+  });
+}
+
+function highlightMatch(text, query) {
+  if (!query) return text;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return text;
+  return text.substring(0, idx) + '<mark>' + text.substring(idx, idx + query.length) + '</mark>' + text.substring(idx + query.length);
+}
+
+let searchDebounce = null;
+function onSearchInput() {
+  clearTimeout(searchDebounce);
+  const query = (document.getElementById('searchInput').value || '').trim();
+  // Always filter sidebar
+  applyFilters();
+  // Dropdown: show if ≥2 chars
+  if (query.length < 2) { hideSearchDropdown(); return; }
+  searchDebounce = setTimeout(() => renderSearchDropdown(query), 150);
+}
+
+function renderSearchDropdown(query) {
+  const dd = document.getElementById('searchDropdown');
+  const q = query.toLowerCase();
+
+  // Match companies
+  const companyMatches = allCruiseLines
+    .filter(cl => (cl.title || '').toLowerCase().includes(q))
+    .slice(0, 5)
+    .map(cl => ({
+      type: 'company',
+      id: cl.id,
+      name: cl.title,
+      sub: [(cl.cruise_types || []).join(', '), (cl.ships || []).length + ' navire' + ((cl.ships||[]).length > 1 ? 's' : '')].filter(Boolean).join(' · '),
+      icon: '🏢'
+    }));
+
+  // Match ships
+  const shipMatches = allShipsIndex
+    .filter(s => s.nameLower.includes(q))
+    .slice(0, 5)
+    .map(s => ({
+      type: 'ship',
+      companyId: s.companyId,
+      shipId: s.shipId,
+      name: s.name,
+      sub: s.companyTitle + (s.year ? ' · ' + s.year : ''),
+      icon: '🚢'
+    }));
+
+  searchDropdownItems = [...companyMatches, ...shipMatches];
+  kbIndex = -1;
+
+  if (searchDropdownItems.length === 0) {
+    dd.innerHTML = '<div class="search-dropdown-empty">Aucun résultat pour « ' + query.replace(/</g,'&lt;') + ' »</div>';
+    dd.classList.add('open');
+    return;
+  }
+
+  const icoCompany = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>';
+  const icoShip = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 1v4"/></svg>';
+
+  let html = '';
+  if (companyMatches.length > 0) {
+    html += '<div class="search-dropdown-section">';
+    html += '<div class="search-dropdown-header">' + icoCompany + ' Compagnies</div>';
+    companyMatches.forEach((item, i) => {
+      html += '<div class="search-dropdown-item" data-idx="' + i + '" onmouseenter="kbHighlight(' + i + ')" onclick="selectSearchItem(' + i + ')">';
+      html += '<div class="search-dropdown-item-icon company">' + icoCompany + '</div>';
+      html += '<div class="search-dropdown-item-text"><div class="search-dropdown-item-name">' + highlightMatch(item.name, query) + '</div>';
+      html += '<div class="search-dropdown-item-sub">' + item.sub + '</div></div></div>';
+    });
+    html += '</div>';
+  }
+  if (shipMatches.length > 0) {
+    html += '<div class="search-dropdown-section">';
+    html += '<div class="search-dropdown-header">' + icoShip + ' Navires</div>';
+    shipMatches.forEach((item, gi) => {
+      const idx = companyMatches.length + gi;
+      html += '<div class="search-dropdown-item" data-idx="' + idx + '" onmouseenter="kbHighlight(' + idx + ')" onclick="selectSearchItem(' + idx + ')">';
+      html += '<div class="search-dropdown-item-icon ship">' + icoShip + '</div>';
+      html += '<div class="search-dropdown-item-text"><div class="search-dropdown-item-name">' + highlightMatch(item.name, query) + '</div>';
+      html += '<div class="search-dropdown-item-sub">' + item.sub + '</div></div></div>';
+    });
+    html += '</div>';
+  }
+
+  dd.innerHTML = html;
+  dd.classList.add('open');
+}
+
+function hideSearchDropdown() {
+  document.getElementById('searchDropdown').classList.remove('open');
+  searchDropdownItems = [];
+  kbIndex = -1;
+}
+
+function kbHighlight(idx) {
+  kbIndex = idx;
+  document.querySelectorAll('#searchDropdown .search-dropdown-item').forEach(el => {
+    el.classList.toggle('kb-active', parseInt(el.dataset.idx) === idx);
+  });
+}
+
+function selectSearchItem(idx) {
+  const item = searchDropdownItems[idx];
+  if (!item) return;
+  hideSearchDropdown();
+  document.getElementById('searchInput').value = '';
+  applyFilters();
+
+  if (item.type === 'company') {
+    selectCruiseLine(item.id);
+  } else if (item.type === 'ship') {
+    // Open ship popup directly
+    openShipDetail(item.companyId, item.shipId);
+  }
+}
+
+// Wire up search input
+document.addEventListener('DOMContentLoaded', () => {
+  const si = document.getElementById('searchInput');
+  if (si) {
+    si.addEventListener('input', onSearchInput);
+    si.addEventListener('keydown', e => {
+      const dd = document.getElementById('searchDropdown');
+      if (!dd.classList.contains('open') || searchDropdownItems.length === 0) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        kbHighlight(Math.min(kbIndex + 1, searchDropdownItems.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        kbHighlight(Math.max(kbIndex - 1, 0));
+      } else if (e.key === 'Enter' && kbIndex >= 0) {
+        e.preventDefault();
+        selectSearchItem(kbIndex);
+      } else if (e.key === 'Escape') {
+        hideSearchDropdown();
+      }
+    });
+    si.addEventListener('focus', () => {
+      const q = (si.value || '').trim();
+      if (q.length >= 2) renderSearchDropdown(q);
+    });
+  }
+});
+
+// Close dropdown on click outside
+document.addEventListener('click', e => {
+  const box = document.querySelector('.search-box');
+  if (box && !box.contains(e.target)) hideSearchDropdown();
+});
+
+// =====================================================================
+// LISTE SIDEBAR
+// =====================================================================
+function renderList() {
+  const header = document.getElementById('cruiseListHeader');
+  const list = document.getElementById('cruiseList');
+
+  // Toggle map legend
+  const isShipMode = hasActiveShipFilters();
+  document.getElementById('mapLegend').style.display = isShipMode ? 'none' : '';
+  document.getElementById('mapLegendShips').style.display = isShipMode ? '' : 'none';
+
+  // ── MODE NAVIRES : si des filtres navire sont actifs, afficher les navires individuels ──
+  if (isShipMode) {
+    const matchingShips = [];
+    filteredCruiseLines.forEach(cl => {
+      (cl.ships || []).forEach(ship => {
+        if (shipMatchesFilters(ship, cl)) {
+          matchingShips.push({ ship, cl });
+        }
+      });
+    });
+
+    // Deduplicate by normalized ship name — group companies offering the same physical ship
+    const normName = n => (n||'').toLowerCase().replace(/^(ms|mv|rv|m\/s|m\/v|m\/y|le|la)\s+/i,'').trim();
+    const shipGroups = new Map();
+    matchingShips.forEach(({ ship, cl }) => {
+      const key = normName(ship.name);
+      if (!shipGroups.has(key)) {
+        shipGroups.set(key, { ship, cl, companies: [cl.title], allEntries: [{ ship, cl }] });
+      } else {
+        const grp = shipGroups.get(key);
+        grp.companies.push(cl.title);
+        grp.allEntries.push({ ship, cl });
+        // Keep the entry with the most data (photos, cabins, etc.)
+        const score = s => (s.image?1:0) + (s.photos||[]).length + (s.cabins_detail||[]).length + (s.common_areas||[]).length + (s.description||'').length/100;
+        if (score(ship) > score(grp.ship)) { grp.ship = ship; grp.cl = cl; }
+      }
+    });
+
+    const uniqueShips = [...shipGroups.values()];
+    header.textContent = `${uniqueShips.length} navire${uniqueShips.length > 1 ? 's' : ''} trouvé${uniqueShips.length > 1 ? 's' : ''}`;
+
+    if (uniqueShips.length === 0) {
+      list.innerHTML = '<div class="no-results"><p>Aucun navire ne correspond à vos critères.</p><p>Essayez de modifier vos filtres.</p></div>';
+      return;
+    }
+
+    uniqueShips.sort((a, b) => (a.ship.name || '').localeCompare(b.ship.name || '', 'fr'));
+
+    let html = '';
+    uniqueShips.forEach(({ ship, cl, companies }) => {
+      const types = cl.cruise_types || [];
+      let typeClass = '';
+      if (types.includes('Croisière fluviale')) typeClass = 'type-fluviale';
+      else if (types.includes('Croisière maritime')) typeClass = 'type-maritime';
+
+      let tagsHtml = '';
+      if (ship.capacity) tagsHtml += `<span class="cruise-card-tag tag-type">👥 ${ship.capacity} pax</span>`;
+      if (ship.year) tagsHtml += `<span class="cruise-card-tag tag-type">📅 ${ship.year}</span>`;
+      if (cl.gamme) {
+        const gammeClassMap = {'Économique':'tag-gamme-eco','Standard':'tag-gamme-standard','Premium':'tag-gamme-premium','Luxe':'tag-gamme-luxe','Ultra-luxe':'tag-gamme-ultra'};
+        tagsHtml += `<span class="cruise-card-tag ${gammeClassMap[cl.gamme] || 'tag-type'}">${cl.gamme}</span>`;
+      }
+
+      const companiesText = companies.length > 1
+        ? companies.join(', ')
+        : cl.title;
+
+      html += `<div class="cruise-card ${typeClass}" onclick="openShipDetail('${cl.id}','${ship.id}')">
+        ${ship.image ? `<img class="cruise-card-img" src="${ship.image}" alt="" loading="lazy" style="object-fit:cover" onerror="this.outerHTML='<div class=\\'cruise-card-img cruise-card-img-init\\'>🚢</div>'">` : '<div class="cruise-card-img cruise-card-img-init">🚢</div>'}
+        <div class="cruise-card-info">
+          <div class="cruise-card-name">${ship.name || 'Navire'}</div>
+          <div class="cruise-card-zones">${companiesText}</div>
+          <div class="cruise-card-tags">${tagsHtml}</div>
+        </div>
+      </div>`;
+    });
+
+    list.innerHTML = html;
+    return;
+  }
+
+  // ── MODE COMPAGNIES (par défaut) ──
+  header.textContent = `${filteredCruiseLines.length} croisiériste${filteredCruiseLines.length > 1 ? 's' : ''} trouvé${filteredCruiseLines.length > 1 ? 's' : ''}`;
+
+  if (filteredCruiseLines.length === 0) {
+    list.innerHTML = '<div class="no-results"><p>Aucun croisiériste ne correspond à vos critères.</p><p>Essayez de modifier vos filtres.</p></div>';
+    return;
+  }
+
+  // Sort: sponsored first, then alphabetical
+  const sorted = [...filteredCruiseLines].sort((a, b) => {
+    const aS = a.sponsored ? 0 : 1;
+    const bS = b.sponsored ? 0 : 1;
+    if (aS !== bS) return aS - bS;
+    return (a.title || '').localeCompare(b.title || '', 'fr');
+  });
+
+  let html = '';
+  sorted.forEach(cl => {
+    const isSpon = cl.sponsored === true;
+    const imgSrc = cl.image || cl.logo_url || '';
+    const zonesStr = [...(cl.zones || []), ...(cl.fleuves || [])].join(', ');
+    const shipCount = (cl.ships || []).length;
+    const initials = (cl.title||'?').substring(0,2).toUpperCase();
+
+    // Determine type class for left border color
+    const types = cl.cruise_types || [];
+    let typeClass = '';
+    if (types.includes('Croisière fluviale')) typeClass = 'type-fluviale';
+    else if (types.includes('Croisière maritime')) typeClass = 'type-maritime';
+
+    // Gamme badge class
+    const gammeClassMap = {'Économique':'tag-gamme-eco','Standard':'tag-gamme-standard','Premium':'tag-gamme-premium','Luxe':'tag-gamme-luxe','Ultra-luxe':'tag-gamme-ultra'};
+    const gammeClass = gammeClassMap[cl.gamme] || 'tag-type';
+
+    let tagsHtml = '';
+    if (cl.gamme) tagsHtml += `<span class="cruise-card-tag ${gammeClass}">${cl.gamme}</span>`;
+    if (shipCount > 0) tagsHtml += `<span class="cruise-card-tag tag-ships">${shipCount} navire${shipCount > 1 ? 's' : ''}</span>`;
+    types.slice(0, 1).forEach(t => { if (cl.gamme && t.toLowerCase().includes(cl.gamme.toLowerCase())) return; tagsHtml += `<span class="cruise-card-tag tag-type">${t.replace('Croisière ','')}</span>`; });
+
+    html += `<div class="cruise-card${isSpon ? ' sponsored' : ''} ${typeClass}" data-id="${cl.id}" onclick="selectCruiseLine('${cl.id}')">
+      ${imgSrc ? `<img class="cruise-card-img" src="${imgSrc}" alt="" loading="lazy" onerror="this.outerHTML='<div class=\\'cruise-card-img cruise-card-img-init\\'>${initials}</div>'">` : `<div class="cruise-card-img cruise-card-img-init">${initials}</div>`}
+      <div class="cruise-card-info">
+        <div class="cruise-card-name">${cl.title}</div>
+        <div class="cruise-card-zones">${zonesStr}</div>
+        <div class="cruise-card-tags">${tagsHtml}</div>
+      </div>
+    </div>`;
+  });
+
+  list.innerHTML = html;
+}
+
+function updateCount() {
+  const el = document.getElementById('topbarCount');
+  if (el) el.textContent = filteredCruiseLines.length;
+  const embed = document.getElementById('embedCount');
+  if (embed) embed.textContent = allCruiseLines.length;
+}
+
+// =====================================================================
+// CARTE
+// =====================================================================
+function initMainMap() {
+  mainMap = L.map('mainMap', { zoomControl: true, scrollWheelZoom: true, closePopupOnClick: false, tap: false, minZoom: 3, maxBounds: [[-85, -180],[85, 180]], maxBoundsViscosity: 1.0 }).setView([47, 10], 5);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CARTO | © TourMaG.com — CruiseMAP', maxZoom: 18, noWrap: true
+  }).addTo(mainMap);
+  markerClusterGroup = L.markerClusterGroup({
+    maxClusterRadius: 45,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    iconCreateFunction: function(cluster) {
+      const count = cluster.getChildCount();
+      let size = 'small';
+      if (count > 20) size = 'large';
+      else if (count > 5) size = 'medium';
+      return L.divIcon({
+        html: '<div>' + count + '</div>',
+        className: 'marker-cluster marker-cluster-' + size,
+        iconSize: L.point(36, 36)
+      });
+    }
+  });
+  mainMap.addLayer(markerClusterGroup);
+  if (!('ontouchstart' in window)) {
+    mainMap.on('click', function() { mainMap.closePopup(); closeDestSpot(); });
+  }
+  // Show zone labels only when zoomed in enough
+  function updateZoneLabels() {
+    const mapEl = document.getElementById('mainMap');
+    if (!mapEl) return;
+    if (mainMap.getZoom() >= 6) {
+      mapEl.classList.remove('zoom-labels-hidden');
+    } else {
+      mapEl.classList.add('zoom-labels-hidden');
+    }
+  }
+  mainMap.on('zoomend', updateZoneLabels);
+  updateZoneLabels();
+}
+
+function resetMapView() {
+  if (mainMap) mainMap.setView([47, 10], 5, { animate: true });
+}
+
+// =====================================================================
+// MAP MODE SWITCH
+// =====================================================================
+function switchMapMode(mode) {
+  currentMapMode = mode;
+  closeDestSpot();
+  document.getElementById('switchDestinations').classList.toggle('active', mode === 'destinations');
+  document.getElementById('switchShips').classList.toggle('active', mode === 'ships');
+
+  // Toggle legend
+  document.getElementById('mapLegend').style.display = mode === 'ships' ? 'none' : '';
+  document.getElementById('mapLegendShips').style.display = mode === 'ships' ? '' : 'none';
+
+  if (mode === 'destinations') {
+    clearShipMarkers();
+    renderMarkers();
+  } else {
+    markerClusterGroup.clearLayers();
+    markers = [];
+    renderShipMarkers();
+  }
+}
+
+// =====================================================================
+// DESTINATION MARKERS
+// =====================================================================
+function renderMarkers() {
+  if (!mainMap) return;
+  markerClusterGroup.clearLayers();
+  markers.forEach(m => { if (m._isSponsored && mainMap.hasLayer(m)) mainMap.removeLayer(m); });
+  markers = [];
+
+  // Build set of known river names from all cruise line data
+  const knownRivers = new Set();
+  allCruiseLines.forEach(cl => {
+    (cl.fleuves || []).forEach(f => knownRivers.add(f));
+  });
+
+  const pointMap = new Map();
+  filteredCruiseLines.forEach(cl => {
+    (cl.coordinates || []).forEach(coord => {
+      if (coord.lat == null || coord.lng == null) return;
+      const key = coord.lat.toFixed(2) + ',' + coord.lng.toFixed(2);
+      if (!pointMap.has(key)) pointMap.set(key, { lat: coord.lat, lng: coord.lng, zone: coord.zone, entries: [] });
+      const point = pointMap.get(key);
+      point.entries.push({ cl: cl });
+    });
+  });
+
+  pointMap.forEach(point => {
+    const hasSpon = point.entries.some(e => e.cl.sponsored);
+    const sponWithLogo = point.entries.find(e => e.cl.sponsored && e.cl.logo_url);
+    // Detect river by zone name, not by cruise type
+    const isRiver = knownRivers.has(point.zone);
+    let icon;
+    if (sponWithLogo) {
+      const logo = sponWithLogo.cl.logo_url;
+      const otherCount = point.entries.length - 1;
+      const countBadge = otherCount > 0 ? '<div class="marker-count">+' + otherCount + ' autre' + (otherCount > 1 ? 's' : '') + '</div>' : '';
+      icon = L.divIcon({
+        className: 'custom-marker sponsored sponsored-logo',
+        iconSize: [56, 56], iconAnchor: [28, 28],
+        html: '<img src="' + logo + '" alt="" onerror="this.parentNode.classList.remove(\'sponsored-logo\');this.remove()"><div class="sponsor-star">★</div>' + countBadge
+      });
+    } else if (isRiver && !hasSpon) {
+      const riverLabel = point.zone || '';
+      icon = L.divIcon({ className: 'custom-marker river', iconSize: [24, 20], iconAnchor: [12, 10],
+        html: '<span class="marker-zone-label river-label">〰 ' + riverLabel + '</span>'
+      });
+    } else {
+      const size = hasSpon ? [28, 28] : [20, 20];
+      const zoneLabel = point.zone || '';
+      icon = L.divIcon({ className: 'custom-marker' + (hasSpon ? ' sponsored' : ''), iconSize: size, iconAnchor: [size[0]/2, size[1]/2],
+        html: '<span class="marker-zone-label">' + zoneLabel + '</span>'
+      });
+    }
+
+    const marker = L.marker([point.lat, point.lng], { icon, zIndexOffset: hasSpon ? 1000 : 0 });
+    // Store point data for sidebar injection on click
+    marker._destPoint = point;
+    marker._destIsRiver = isRiver;
+
+    // Tooltip (léger, au hover) — nom de la destination + nombre de compagnies
+    const tooltipLabel = (point.zone || '?') + '  ·  ' + point.entries.length + ' compagnie' + (point.entries.length > 1 ? 's' : '');
+    marker.bindTooltip(tooltipLabel, { direction: 'top', offset: [0, -8], className: 'dest-tooltip' });
+
+    // Clic → ouvrir le panneau destination dans le sidebar
+    marker.on('click', function() { openDestSpot(this._destPoint, this._destIsRiver); });
+
+    if (hasSpon && sponWithLogo) {
+      marker._isSponsored = true;
+      marker.addTo(mainMap);
+    } else {
+      markerClusterGroup.addLayer(marker);
+    }
+    markers.push(marker);
+  });
+}
+
+// =====================================================================
+// SHIP MARKERS (live tracking mode)
+// =====================================================================
+function clearShipMarkers() {
+  shipMarkers.forEach(m => { if (mainMap.hasLayer(m)) mainMap.removeLayer(m); });
+  shipMarkers = [];
+}
+
+function renderShipMarkers() {
+  if (!mainMap) return;
+  clearShipMarkers();
+
+  const targetLines = activeCruiseLine ? [activeCruiseLine] : filteredCruiseLines;
+  let hasShips = false;
+
+  // Collect and deduplicate ships by name
+  const normN = n => (n||'').toLowerCase().replace(/^(ms|mv|rv|m\/s|m\/v|m\/y|le|la)\s+/i,'').trim();
+  const seenShips = new Set();
+
+  targetLines.forEach(cl => {
+    (cl.ships || []).forEach(ship => {
+      if (!ship.position_lat || !ship.position_lng) return;
+      if (hasActiveShipFilters() && !shipMatchesFilters(ship, cl)) return;
+      const key = normN(ship.name);
+      if (seenShips.has(key)) return; // Skip duplicate
+      seenShips.add(key);
+      hasShips = true;
+      
+      const isLive = ship.position_live;
+      const isMoving = ship.position_speed && ship.position_speed > 0.5;
+      
+      // SVG bateau horizontal (proue à droite)
+      const boatSvg = `<svg viewBox="0 0 32 16" width="20" height="10" fill="white"><path d="M2 10 L8 4 L28 4 L30 8 L28 12 L4 12 Z"/><path d="M10 4 L10 2 L12 2 L12 4" fill="white" opacity="0.6"/></svg>`;
+      
+      const bgColor = isMoving ? '#1B6EC2' : '#64748b';
+      const icon = L.divIcon({
+        className: 'ship-marker-live',
+        iconSize: [44, 44],
+        iconAnchor: [22, 22],
+        html: `<div style="position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center">
+          <div style="width:40px;height:40px;background:${bgColor};border-radius:50%;border:3px solid #fff;box-shadow:0 2px 12px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center">${boatSvg}</div>
+          ${isLive ? '<div style="position:absolute;top:0;right:0;width:10px;height:10px;background:#22C55E;border-radius:50%;border:2px solid #fff;animation:pulse 2s infinite"></div>' : ''}
+        </div>`
+      });
+      
+      const marker = L.marker([ship.position_lat, ship.position_lng], { icon });
+      
+      // Popup card enrichie
+      const imgHtml = ship.image ? `<img src="${ship.image}" style="width:100%;height:120px;object-fit:cover;border-radius:8px 8px 0 0;display:block" onerror="this.style.display='none'">` : '';
+      
+      let statusBadge = '';
+      if (isLive && isMoving) {
+        statusBadge = `<span style="display:inline-flex;align-items:center;gap:4px;font-size:.65rem;font-weight:700;color:#fff;background:#1B6EC2;padding:3px 8px;border-radius:10px"><span style="width:6px;height:6px;background:#22C55E;border-radius:50%;display:inline-block;animation:pulse 2s infinite"></span> En navigation — ${ship.position_speed.toFixed(1)} nœuds</span>`;
+      } else if (isLive) {
+        statusBadge = `<span style="display:inline-flex;align-items:center;gap:4px;font-size:.65rem;font-weight:700;color:#fff;background:#64748b;padding:3px 8px;border-radius:10px"><span style="width:6px;height:6px;background:#22C55E;border-radius:50%;display:inline-block;animation:pulse 2s infinite"></span> À quai</span>`;
+      }
+      
+      let metaHtml = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">';
+      if (ship.capacity) metaHtml += `<span style="font-size:.68rem;padding:2px 8px;background:rgba(27,110,194,.08);border:1px solid rgba(27,110,194,.15);border-radius:8px;color:var(--blue);font-weight:600">👥 ${ship.capacity} pax</span>`;
+      if (ship.year) metaHtml += `<span style="font-size:.68rem;padding:2px 8px;background:rgba(100,116,139,.08);border:1px solid rgba(100,116,139,.15);border-radius:8px;color:var(--text-light);font-weight:600">📅 ${ship.year}</span>`;
+      if (ship.position_destination) metaHtml += `<span style="font-size:.68rem;padding:2px 8px;background:rgba(14,165,162,.08);border:1px solid rgba(14,165,162,.15);border-radius:8px;color:var(--teal);font-weight:600">📍 ${ship.position_destination}</span>`;
+      metaHtml += '</div>';
+
+      let timeHtml = '';
+      if (ship.position_updated) {
+        const d = new Date(ship.position_updated);
+        const ago = Math.round((Date.now() - d.getTime()) / 60000);
+        const agoStr = ago < 60 ? `il y a ${ago} min` : ago < 1440 ? `il y a ${Math.round(ago/60)}h` : `il y a ${Math.round(ago/1440)}j`;
+        timeHtml = `<div style="font-size:.6rem;color:var(--text-lighter);margin-top:6px">Mis à jour ${agoStr}</div>`;
+      }
+      
+      const popupHtml = `<div style="width:420px;font-family:system-ui,-apple-system,sans-serif;border-radius:10px;overflow:hidden">
+        ${imgHtml}
+        <div style="padding:16px 18px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+            <div style="min-width:0;flex:1">
+              <div style="font-size:.95rem;font-weight:800;color:var(--text);line-height:1.2">${ship.name}</div>
+              <div style="font-size:.74rem;color:var(--text-lighter);font-weight:500;margin-top:2px">${cl.title}</div>
+            </div>
+            ${statusBadge}
+          </div>
+          ${metaHtml}
+          ${timeHtml}
+          <div style="margin-top:12px;border-top:1px solid var(--border-light);padding-top:12px;display:flex;gap:8px">
+            <div class="popup-mini popup-clickable" data-cl-id="${cl.id}" data-ship-id="${ship.id||''}" style="cursor:pointer;flex:1;text-align:center;padding:8px;background:var(--blue);color:#fff;border-radius:6px;font-size:.74rem;font-weight:700">Voir la fiche →</div>
+          </div>
+        </div>
+      </div>`;
+      marker.bindPopup(popupHtml, { offset: [0, -10], maxWidth: 460, minWidth: 420, className: 'ship-popup-leaflet' });
+      marker.addTo(mainMap);
+      shipMarkers.push(marker);
+    });
+  });
+
+  // Bouton retour vue globale (visible uniquement si un croisiériste est sélectionné)
+  updateShipViewAllButton();
+
+  if (shipMarkers.length > 0) {
+    const bounds = L.latLngBounds(shipMarkers.map(m => m.getLatLng()));
+    mainMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 8, animate: true });
+  }
+}
+
+function updateShipViewAllButton() {
+  var btn = document.getElementById('shipViewAllBtn');
+  if (!btn) return;
+  if (currentMapMode === 'ships' && activeCruiseLine) {
+    btn.style.display = '';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+// =====================================================================
+// DESTINATION SPOT (sidebar panel replacing map popups)
+// =====================================================================
+function openDestSpot(point, isRiver) {
+  const spot = document.getElementById('destSpot');
+  const bannerGrad = isRiver
+    ? 'linear-gradient(135deg, var(--ct-fluviale), #0DC8A0)'
+    : 'linear-gradient(135deg, var(--ct-maritime), var(--blue-light))';
+  const destTypeLabel = isRiver ? '〰 Fleuve' : '🌊 Destination';
+  const count = point.entries.length;
+
+  let html = `<div class="dest-spot-banner" style="background:${bannerGrad}">
+    <button class="dest-spot-close" onclick="event.stopPropagation();closeDestSpot()" title="Fermer">✕</button>
+    <div class="dest-spot-type">${destTypeLabel}</div>
+    <div class="dest-spot-name">${point.zone || ''}</div>
+    <div class="dest-spot-count">${count} compagnie${count > 1 ? 's' : ''} ${count > 1 ? 'naviguent' : 'navigue'} ici</div>
+  </div>`;
+  html += '<div class="dest-spot-list">';
+  point.entries.forEach(e => {
+    const cl = e.cl;
+    const logoH = cl.logo_url
+      ? `<img class="dest-spot-logo" src="${cl.logo_url}" alt="" onerror="this.style.display='none'">`
+      : `<div class="dest-spot-logo-init">${(cl.title||'?').substring(0,2).toUpperCase()}</div>`;
+    html += `<div class="dest-spot-item${cl.sponsored ? ' sponsored' : ''}" onclick="selectCruiseLine('${cl.id}')" data-cl-id="${cl.id}">
+      ${logoH}
+      <span class="dest-spot-company">${cl.title}</span>
+    </div>`;
+  });
+  html += '</div>';
+
+  spot.innerHTML = html;
+  spot.classList.add('open');
+  // Scroll le sidebar vers le haut pour montrer le panneau destination
+  spot.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeDestSpot() {
+  const spot = document.getElementById('destSpot');
+  spot.classList.remove('open');
+  spot.innerHTML = '';
+}
+
+// =====================================================================
+// SÉLECTION D'UN CROISIÉRISTE
+// =====================================================================
+function selectCruiseLine(id) {
+  const cl = allCruiseLines.find(c => c.id === id);
+  if (!cl) return;
+  activeCruiseLine = cl;
+
+  clearHighlights();
+  document.querySelectorAll('.cruise-card').forEach(c => c.classList.remove('active'));
+  const card = document.querySelector(`.cruise-card[data-id="${id}"]`);
+  if (card) { card.classList.add('active'); card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+
+  // Zoom sur les zones de ce croisiériste
+  const coords = cl.coordinates || [];
+  if (coords.length > 0 && mainMap) {
+    if (coords.length === 1) {
+      mainMap.setView([coords[0].lat, coords[0].lng], 5, { animate: true });
+    } else {
+      const bounds = L.latLngBounds(coords.map(c => [c.lat, c.lng]));
+      mainMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 6, animate: true });
+    }
+
+    // Highlight markers
+    setTimeout(() => {
+      const clCoordKeys = new Set(coords.map(c => c.lat.toFixed(2) + ',' + c.lng.toFixed(2)));
+      markers.forEach(m => {
+        const ll = m.getLatLng();
+        const mKey = ll.lat.toFixed(2) + ',' + ll.lng.toFixed(2);
+        if (clCoordKeys.has(mKey)) {
+          const el = m.getElement ? m.getElement() : m._icon;
+          if (el) el.classList.add('highlighted');
+        }
+      });
+    }, 400);
+  }
+
+  // Si en mode navires, rafraîchir les marqueurs pour ce croisiériste
+  if (currentMapMode === 'ships') {
+    renderShipMarkers();
+  }
+
+  // Remplir le panel de détail
+  renderDetailPanel(cl);
+}
+
+function renderDetailPanel(cl) {
+  const panel = document.getElementById('detailPanel');
+  const header = document.getElementById('detailHeader');
+  const body = document.getElementById('detailBody');
+  const isSpon = cl.sponsored === true;
+
+  const headerImg = cl.logo_url || cl.image || '';
+  header.innerHTML = `
+    ${headerImg ? `<div style="height:140px;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px;border-bottom:1px solid var(--border)"><img src="${headerImg}" alt="${cl.title}" style="max-height:100px;max-width:80%;object-fit:contain" onerror="this.style.display='none'"></div>` : '<div style="height:140px;background:linear-gradient(135deg,var(--navy),#1E3A5F)"></div>'}
+    <button class="detail-close" onclick="closeDetail()">✕</button>`;
+
+  let html = `<div class="detail-title">${cl.title}${cl.is_charterer?' <span style="display:inline-flex;align-items:center;gap:4px;font-size:.62rem;padding:3px 9px;background:linear-gradient(135deg,#F59E0B,#FB923C);color:#fff;border-radius:10px;font-weight:800;letter-spacing:.3px;vertical-align:3px;box-shadow:0 1px 3px rgba(245,158,11,.3)">🤝 TOUR-OPÉRATEUR</span>':''}</div>`;
+
+  // Gamme & types — moved to top for immediate visibility
+  const gammeColors = {'Économique':'#78909C','Standard':'#22C55E','Premium':'#1B6EC2','Luxe':'#D4A843','Ultra-luxe':'#8B5CF6'};
+  const typeColors = {'Croisière maritime':'var(--ct-maritime)','Croisière fluviale':'var(--ct-fluviale)'};
+  let metaHtml = '';
+  if (cl.gamme) {
+    const gc = gammeColors[cl.gamme] || 'var(--text-light)';
+    metaHtml += `<span style="font-size:0.72rem;padding:4px 12px;background:${gc}15;border:1.5px solid ${gc}40;border-radius:12px;color:${gc};font-weight:700"><i data-lucide="sparkles" style="width:11px;height:11px"></i> Gamme ${cl.gamme}</span>`;
+  }
+  (cl.cruise_types || []).forEach(t => {
+    if (cl.gamme && t.toLowerCase().includes(cl.gamme.toLowerCase())) return;
+    const tc = typeColors[t] || 'var(--text-light)';
+    metaHtml += `<span style="font-size:0.72rem;padding:4px 12px;background:${tc}12;border:1.5px solid ${tc}30;border-radius:12px;color:${tc};font-weight:600"><i data-lucide="ship" style="width:11px;height:11px"></i> ${t}</span>`;
+  });
+  if (cl.year_founded) {
+    metaHtml += `<span style="font-size:0.72rem;padding:4px 12px;background:rgba(100,116,139,.08);border:1.5px solid rgba(100,116,139,.15);border-radius:12px;color:var(--text-light);font-weight:600"><i data-lucide="calendar" style="width:11px;height:11px"></i> Créée en ${cl.year_founded}</span>`;
+  }
+  if (metaHtml) {
+    html += `<div style="margin:8px 0 12px;display:flex;flex-wrap:wrap;gap:6px">${metaHtml}</div>`;
+  }
+
+  // Zones + Fleuves — separated with labels
+  const hasZones = (cl.zones || []).length > 0;
+  const hasFleuves = (cl.fleuves || []).length > 0;
+  if (hasZones || hasFleuves) {
+    html += '<div style="margin:10px 0">';
+    if (hasZones) {
+      html += '<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">';
+      html += '<span style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-lighter);margin-right:4px;width:100%">Zones</span>';
+      cl.zones.forEach(z => { html += `<span class="detail-zone-badge">${z}</span>`; });
+      html += '</div>';
+    }
+    if (hasFleuves) {
+      html += '<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:6px">';
+      html += '<span style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--teal);margin-right:4px;width:100%">Fleuves</span>';
+      cl.fleuves.forEach(f => { html += `<span class="detail-zone-badge" style="background:rgba(14,165,162,0.1);color:var(--teal);border-color:rgba(14,165,162,0.2)">〰 ${f}</span>`; });
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  // Description
+  // Charterer info banner
+  if (cl.is_charterer) {
+    html += `<div style="margin:12px 0;padding:12px 14px;background:linear-gradient(135deg,rgba(245,158,11,.08),rgba(251,146,60,.05));border:1.5px solid rgba(245,158,11,.25);border-radius:10px;display:flex;gap:12px;align-items:flex-start">
+      <div style="font-size:1.3rem;line-height:1;flex-shrink:0">🤝</div>
+      <div>
+        <div style="font-weight:700;color:#92400e;font-size:.8rem;margin-bottom:3px">Tour-opérateur affréteur</div>
+        <div style="font-size:.74rem;color:#78716c;line-height:1.45">Cette compagnie ne possède pas de navires en propre. Elle affrète des navires auprès d'armateurs partenaires (l'armateur réel est indiqué sur chaque fiche navire).</div>
+      </div>
+    </div>`;
+  }
+  html += `<div class="detail-desc">${cl.description || ''}</div>`;
+
+  // Contact commercial (only if contact_visible is not false)
+  if (cl.contact && cl.contact_visible !== false) {
+    const ct = cl.contact;
+    html += `<div class="detail-contact">
+      <div class="detail-contact-header"><i data-lucide="phone" style="width:14px;height:14px"></i> Contact commercial</div>
+      <div class="detail-contact-card">
+        ${ct.photo ? `<img class="detail-contact-photo" src="${ct.photo}" alt="" onerror="this.style.display='none'">` : '<div class="detail-contact-photo-placeholder">👤</div>'}
+        <div class="detail-contact-info">
+          <div class="detail-contact-name">${ct.name || ''}</div>
+          ${ct.role ? `<div class="detail-contact-role">${ct.role}</div>` : ''}
+          <div class="detail-contact-links">
+            ${ct.email ? `<a class="detail-contact-link" href="mailto:${ct.email}">📧 ${ct.email}</a>` : ''}
+            ${ct.phone ? `<a class="detail-contact-link" href="tel:${ct.phone}">📱 ${ct.phone}</a>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // CTA
+  if (cl.url) {
+    html += `<a class="detail-link${isSpon ? ' sponsored' : ''}" href="${cl.url}" target="_blank" rel="noopener"><i data-lucide="external-link" style="width:14px;height:14px"></i> Découvrir ce croisiériste</a>`;
+  }
+
+  // Fleet / Ships
+  const ships = cl.ships || [];
+  if (ships.length > 0) {
+    html += `<div class="detail-fleet">
+      <div class="detail-fleet-title"><i data-lucide="ship" style="width:14px;height:14px"></i> Flotte — ${ships.length} navire${ships.length > 1 ? 's' : ''}</div>`;
+    ships.forEach(ship => {
+      const hasPosition = ship.position_lat && ship.position_lng;
+      html += `<div class="ship-card" onclick="openShipDetail('${cl.id}','${ship.id}')">
+        ${ship.image ? `<img class="ship-card-img" src="${ship.image}" alt="" loading="lazy" onerror="this.style.display='none'">` : '<div class="ship-card-img" style="display:flex;align-items:center;justify-content:center;font-size:1.2rem">🚢</div>'}
+        <div class="ship-card-info">
+          <div class="ship-card-name">${ship.name || 'Navire'}</div>
+          <div class="ship-card-meta">
+            ${ship.capacity ? ship.capacity + ' passagers' : ''}
+            ${ship.year ? ' • Mis en service : ' + ship.year : ''}
+          </div>
+          ${cl.is_charterer && ship.owner_company ? `<div style="font-size:.65rem;color:#92400e;font-weight:600;margin-top:3px;display:inline-flex;align-items:center;gap:3px;padding:2px 7px;background:rgba(245,158,11,.1);border-radius:6px"><span>🤝</span> Armateur : ${ship.owner_company}</div>` : ''}
+          ${hasPosition ? '<div class="ship-card-locate" onclick="event.stopPropagation();locateShipOnMap(' + ship.position_lat + ',' + ship.position_lng + ')"><span class="ship-live-dot"></span> Localiser sur la carte</div>' : ''}
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // News
+  var newsArr = cl.latest_news || [];
+  if (newsArr.length > 0) {
+    var nw = newsArr[0];
+    html += '<div class="detail-news">';
+    html += '<div class="cruisenews-brand">CRUISE NEWS</div>';
+    html += '<div class="cruisenews-tabs">';
+    html += '<div class="cruisenews-tab active">Dernière actualité</div>';
+    if (newsArr.length > 1) {
+      html += '<button class="cruisenews-tab" onclick="openAllNews()">Toutes les actualités (' + newsArr.length + ')</button>';
+    }
+    html += '</div>';
+    html += '<div class="cruisenews-content">';
+    html += '<a href="' + nw.url + '" target="_blank" class="news-card">';
+    if (nw.image) html += '<img src="' + nw.image + '" alt="" class="news-img">';
+    html += '<div class="news-card-body">';
+    html += '<div class="news-card-title">' + nw.title + '</div>';
+    if (nw.date) html += '<div class="news-card-date">' + nw.date + '</div>';
+    html += '<div class="news-card-read">Lire l\'article →</div>';
+    html += '</div></a>';
+    html += '</div></div>';
+    window._currentCruiseNews = newsArr;
+    window._currentCruiseTitle = cl.title;
+  }
+
+  // Event encart
+  if (cl.event_active && cl.event) {
+    var ev = cl.event;
+    html += '<div class="event-encart">';
+    if (ev.image) html += '<img class="event-encart-img" src="' + ev.image + '" alt="" onerror="this.style.display=\'none\'">';
+    html += '<div class="event-encart-body">';
+    if (ev.title) html += '<div class="event-encart-title">' + ev.title + '</div>';
+    if (ev.text) html += '<div class="event-encart-text">' + ev.text + '</div>';
+    if (ev.stand) html += '<div class="event-encart-stand">📍 Stand ' + ev.stand + '</div>';
+    if (ev.button_text && ev.button_url) html += '<a class="event-encart-btn" href="' + ev.button_url + '" target="_blank">' + ev.button_text + '</a>';
+    html += '</div></div>';
+  }
+
+  // Reviews for this cruise line (global)
+  const clReviews = getAllReviewsForCruise(cl.id);
+  if (clReviews.length > 0 || CruiseMAP.agent) {
+    html += renderReviewsSection(cl.id, null, cl.title);
+    html += '<div id="reviewFormContainer_' + cl.id + '_company"></div>';
+  }
+
+  // Reviews per ship (show summary)
+  if (ships.length > 0) {
+    ships.forEach(ship => {
+      const shipReviews = getReviews(cl.id, ship.id);
+      if (shipReviews.length > 0) {
+        const avg = avgRating(shipReviews);
+        html += '<div style="padding:4px 0;font-size:.75rem;color:var(--text-light);display:flex;align-items:center;gap:6px"><span style="color:var(--orange)">' + renderStars(Math.round(avg)) + '</span> ' + ship.name + ' — ' + avg.toFixed(1) + '/5 (' + shipReviews.length + ' avis)</div>';
+      }
+    });
+  }
+
+  body.innerHTML = html;
+  panel.classList.toggle('sponsored-active', isSpon);
+  if (isSpon) {
+    header.insertAdjacentHTML('beforeend', '<div style="position:absolute;bottom:10px;right:10px;background:linear-gradient(135deg,var(--gold),var(--orange));color:#fff;font-size:.68rem;font-weight:700;padding:4px 10px;border-radius:20px;z-index:2;box-shadow:0 2px 8px rgba(212,168,67,.4)">⭐ Sponsorisé</div>');
+  }
+  panel.classList.add('open');
+  if(window.lucide)lucide.createIcons();
+}
+
+// =====================================================================
+// SHIP DETAIL POPUP
+// =====================================================================
+function openShipDetail(clId, shipId) {
+  const cl = allCruiseLines.find(c => c.id === clId);
+  if (!cl) return;
+  const ship = (cl.ships || []).find(s => s.id === shipId);
+  if (!ship) return;
+
+  document.getElementById('shipPopupTitle').textContent = ship.name || 'Navire';
+
+  // Collect all photos for lightbox
+  const allPhotos = [ship.image, ...(ship.photos || [])].filter(Boolean);
+  window.currentShipAllPhotos = allPhotos;
+  window.currentShipPhotos = ship.photos ? [...ship.photos] : [];
+
+  let html = '';
+
+  // ──── HERO SECTION ────
+  const heroImg = ship.image || '';
+  const hasPosition = ship.position_lat && ship.position_lng;
+  const isLive = ship.position_live;
+  const isMoving = ship.position_speed && ship.position_speed > 0.5;
+
+  html += '<div class="ship-hero">';
+  if (heroImg) {
+    html += `<img src="${heroImg}" alt="${ship.name || ''}" style="cursor:pointer" onclick="openLightbox(currentShipAllPhotos,0)" onerror="this.style.display='none'">`;
+  }
+  html += '<div class="ship-hero-overlay"></div>';
+  html += '<div class="ship-hero-content">';
+  html += `<div class="ship-hero-company">${cl.title || ''}</div>`;
+  html += `<div class="ship-hero-name">${ship.name || 'Navire'}</div>`;
+  html += '<div class="ship-hero-badges">';
+  // Live status badge
+  if (isLive && isMoving) {
+    html += `<span class="ship-hero-badge badge-live"><span class="live-dot"></span> En navigation — ${ship.position_speed.toFixed(1)} nœuds</span>`;
+  } else if (isLive) {
+    html += '<span class="ship-hero-badge badge-docked"><span class="live-dot"></span> À quai</span>';
+  }
+  if (ship.position_destination) {
+    html += `<span class="ship-hero-badge badge-type"><i data-lucide="map-pin" style="width:10px;height:10px"></i> ${ship.position_destination}</span>`;
+  }
+  // Cruise type badges
+  (cl.cruise_types || []).forEach(t => {
+    html += `<span class="ship-hero-badge badge-type">${t.replace('Croisière ','')}</span>`;
+  });
+  // Owner badge (for charterers)
+  if (cl.is_charterer && ship.owner_company) {
+    html += `<span class="ship-hero-badge badge-owner"><i data-lucide="handshake" style="width:10px;height:10px"></i> Armateur : ${ship.owner_company}</span>`;
+  }
+  html += '</div></div></div>';
+
+  // ──── STATS RIBBON ────
+  const stats = [];
+  if (ship.capacity) stats.push({ icon: 'users', val: ship.capacity, label: 'Passagers' });
+  if (ship.cabins) stats.push({ icon: 'bed-double', val: ship.cabins, label: 'Cabines' });
+  if (ship.year) stats.push({ icon: 'calendar', val: ship.year, label: 'Lancement' });
+  if (ship.tonnage) stats.push({ icon: 'weight', val: ship.tonnage, label: 'Tonnage' });
+  if (ship.length) stats.push({ icon: 'ruler', val: ship.length + 'm', label: 'Longueur' });
+  if (ship.crew) stats.push({ icon: 'hard-hat', val: ship.crew, label: 'Équipage' });
+
+  if (stats.length > 0) {
+    html += '<div class="ship-stats-ribbon">';
+    stats.forEach(s => {
+      html += `<div class="ship-stat-cell"><div class="stat-icon"><i data-lucide="${s.icon}" style="width:15px;height:15px"></i></div><div class="stat-value">${s.val}</div><div class="stat-label">${s.label}</div></div>`;
+    });
+    html += '</div>';
+  }
+
+  // ──── DESCRIPTION SECTION ────
+  if (ship.description) {
+    html += '<div class="ship-section">';
+    html += '<div class="ship-section-title"><i data-lucide="file-text" style="width:13px;height:13px"></i> Présentation</div>';
+    html += `<div class="ship-section-desc">${ship.description}</div>`;
+    html += '</div>';
+  }
+
+  // ──── NAVIGATION ZONES ────
+  if (ship.ship_zones && ship.ship_zones.length > 0) {
+    html += '<div style="padding:0 16px 8px">';
+    html += '<div style="font-size:.72rem;font-weight:700;color:var(--text-lighter);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px"><i data-lucide="map-pin" style="width:11px;height:11px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Zones de navigation</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:5px">';
+    ship.ship_zones.forEach(z => {
+      html += `<span style="font-size:.72rem;font-weight:600;padding:4px 10px;border-radius:8px;background:rgba(14,165,162,.08);border:1px solid rgba(14,165,162,.18);color:var(--teal)">${z}</span>`;
+    });
+    html += '</div></div>';
+  }
+
+  // ──── SHIP URL BUTTON ────
+  if (ship.url) {
+    html += `<div style="padding:0 16px 4px"><a href="${ship.url}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;background:linear-gradient(135deg,var(--blue),var(--teal));color:#fff;border:none;border-radius:10px;font-size:.82rem;font-weight:700;text-decoration:none;font-family:inherit;transition:all .15s;cursor:pointer"><i data-lucide="external-link" style="width:14px;height:14px"></i> Voir la page du navire</a></div>`;
+  }
+
+  // ──── AMENITIES SECTION ────
+  if (ship.amenities && ship.amenities.length > 0) {
+    // Ordered list — categories define sort order only, not displayed
+    const AMENITY_ORDER = [
+      "Restaurant","Restaurant gastronomique","Buffet","Bar","Bar-lounge","Cave à vins","Bistro","Chef's Table",
+      "Piscine","Piscine intérieure","Spa","Sauna","Hammam","Fitness","Salon de massage","Espace bien-être",
+      "Théâtre","Casino","Cinéma","Discothèque","Bibliothèque","Salon de musique",
+      "Pont soleil","Balcons","Balcons privés","Vélos","Piste de jogging","Putting green","Activités nautiques","Plongée",
+      "Wi-Fi","Boutique","Kids Club","Conciergerie","Blanchisserie","Salon de coiffure","Majordome",
+      "Stabilisateurs","Roue à aubes","Propulsion hybride"
+    ];
+    const amenitySet = new Set(ship.amenities);
+    const sorted = AMENITY_ORDER.filter(a => amenitySet.has(a));
+    // Add any not in our known list
+    ship.amenities.forEach(a => { if (!sorted.includes(a)) sorted.push(a); });
+    html += '<div class="ship-section">';
+    html += '<div class="ship-section-title"><i data-lucide="sparkles" style="width:13px;height:13px"></i> Équipements à bord</div>';
+    html += '<div class="ship-amenity-grid">';
+    sorted.forEach(a => {
+      html += `<div class="ship-amenity-row"><i data-lucide="check" style="width:13px;height:13px;flex-shrink:0"></i> ${a}</div>`;
+    });
+    html += '</div></div>';
+  }
+
+  // ──── GALLERY TABS (Cabines / À bord / Plans) ────
+  const cabinsDetail = ship.cabins_detail || [];
+  const commonAreas = ship.common_areas || [];
+  const deckPlans = ship.deck_plans || (ship.deck_plan ? [ship.deck_plan] : []);
+  const legacyPhotos = ship.photos || [];
+  const hasStructuredData = cabinsDetail.length > 0 || commonAreas.length > 0;
+
+  // Collect ALL photos for lightbox (across all tabs)
+  const allCabinPhotos = cabinsDetail.flatMap(c => c.photos || []);
+  const allAreaPhotos = commonAreas.flatMap(a => a.photos || []);
+  window.currentCabinPhotos = allCabinPhotos;
+  window.currentAreaPhotos = allAreaPhotos;
+  window.currentDeckPlans = deckPlans.filter(u => /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(u));
+
+  if (hasStructuredData || deckPlans.length > 0) {
+    // === STRUCTURED 3-TAB GALLERY ===
+    const tabs = [];
+    if (legacyPhotos.length > 0) tabs.push({ id:'gallery', label:'Galerie', icon:'images', count:legacyPhotos.length });
+    if (cabinsDetail.length > 0) tabs.push({ id:'cabins', label:'Cabines', icon:'bed-double', count:cabinsDetail.length });
+    if (commonAreas.length > 0) tabs.push({ id:'aboard', label:'À bord', icon:'sofa', count:commonAreas.length });
+    if (deckPlans.length > 0) tabs.push({ id:'plans', label:'Plans', icon:'map', count:deckPlans.length });
+
+    if (tabs.length > 0) {
+      html += '<div class="ship-section" style="padding:14px 16px 8px">';
+      html += '<div class="gallery-tabs-wrap">';
+      // Tab buttons
+      html += '<div class="gallery-tabs">';
+      tabs.forEach((t,i) => {
+        html += `<button class="gallery-tab${i===0?' active':''}" onclick="switchGalleryTab('${t.id}',this)"><i data-lucide="${t.icon}" style="width:12px;height:12px"></i> ${t.label} <span class="tab-count">${t.count}</span></button>`;
+      });
+      html += '</div>';
+
+      const firstTabId = tabs[0].id;
+
+      // ─── TAB: GALERIE ───
+      if (legacyPhotos.length > 0) {
+        window.currentShipPhotos = legacyPhotos;
+        html += `<div class="gallery-tab-panel${firstTabId==='gallery'?' active':''}" data-tab="gallery">`;
+        html += '<div class="area-grid">';
+        legacyPhotos.forEach((p,i) => {
+          html += `<div class="area-item" onclick="openLightbox(currentShipPhotos,${i})"><img src="${p}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>`;
+        });
+        html += '</div></div>';
+      }
+
+      // ─── TAB: CABINES ───
+      if (cabinsDetail.length > 0) {
+        html += `<div class="gallery-tab-panel${firstTabId==='cabins'?' active':''}" data-tab="cabins">`;
+        let cabPhotoIdx = 0;
+        cabinsDetail.forEach(cab => {
+          const cabPhotos = cab.photos || [];
+          html += '<div class="cabin-card">';
+          html += '<div class="cabin-card-header"><div>';
+          html += `<div class="cabin-card-name">${cab.type || cab.name || 'Cabine'}</div>`;
+          if (cab.deck) html += `<div class="cabin-card-meta"><i data-lucide="layers" style="width:10px;height:10px;vertical-align:-1px"></i> ${cab.deck}</div>`;
+          html += '</div>';
+          if (cab.surface) html += `<div class="cabin-card-surface">${cab.surface}</div>`;
+          html += '</div>';
+          if (cab.description) html += `<div class="cabin-card-desc">${cab.description}</div>`;
+          if (cabPhotos.length > 0) {
+            html += '<div class="cabin-card-photos">';
+            cabPhotos.forEach((p,pi) => {
+              const globalIdx = cabPhotoIdx + pi;
+              html += `<img src="${p}" alt="${cab.type||''}" loading="lazy" onclick="openLightbox(currentCabinPhotos,${globalIdx})" onerror="this.style.display='none'">`;
+            });
+            html += '</div>';
+          }
+          html += '</div>';
+          cabPhotoIdx += cabPhotos.length;
+        });
+        html += '</div>';
+      }
+
+      // ─── TAB: À BORD / LEGACY ───
+      if (commonAreas.length > 0) {
+        html += `<div class="gallery-tab-panel${firstTabId==='aboard'?' active':''}" data-tab="aboard">`;
+        html += '<div class="area-grid">';
+        let areaPhotoIdx = 0;
+        commonAreas.forEach(area => {
+          const aPhotos = area.photos || [];
+          aPhotos.forEach((p,pi) => {
+            const globalIdx = areaPhotoIdx + pi;
+            html += `<div class="area-item" onclick="openLightbox(currentAreaPhotos,${globalIdx})"><img src="${p}" alt="${area.name||''}" loading="lazy" onerror="this.parentNode.style.display='none'"><div class="area-item-label">${area.name||''}</div></div>`;
+          });
+          areaPhotoIdx += aPhotos.length;
+        });
+        html += '</div></div>';
+      }
+
+      // ─── TAB: PLANS DE PONT ───
+      if (deckPlans.length > 0) {
+        html += `<div class="gallery-tab-panel${firstTabId==='plans'?' active':''}" data-tab="plans">`;
+        const imgPlans = deckPlans.filter(u => /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(u));
+        const linkPlans = deckPlans.filter(u => !/\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(u));
+        if (imgPlans.length > 0) {
+          html += '<div class="deckplan-grid">';
+          imgPlans.forEach((p,i) => {
+            const label = imgPlans.length > 1 ? `Pont ${i+1}` : 'Plan du navire';
+            html += `<div class="deckplan-item" onclick="openLightbox(currentDeckPlans,${i})"><img src="${p}" alt="${label}" loading="lazy" onerror="this.parentNode.style.display='none'"><div class="deckplan-item-label">${label}</div></div>`;
+          });
+          html += '</div>';
+        }
+        linkPlans.forEach(u => {
+          const isPdf = /\.pdf(\?|$)/i.test(u);
+          html += `<a href="${u}" target="_blank" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg);border:1.5px solid var(--blue);border-radius:8px;text-decoration:none;color:var(--text);margin-top:6px;transition:all .15s;font-size:.82rem" onmouseover="this.style.background='rgba(27,110,194,.05)'" onmouseout="this.style.background='var(--bg)'"><i data-lucide="${isPdf?'file-text':'external-link'}" style="width:18px;height:18px;color:var(--blue);flex-shrink:0"></i><span style="font-weight:700">Voir le plan complet</span></a>`;
+        });
+        html += '</div>';
+      }
+
+      html += '</div></div>';
+    }
+
+  } else if (legacyPhotos.length > 0) {
+    // === LEGACY FLAT GALLERY (backward compat) ===
+    html += '<div class="ship-section">';
+    html += '<div class="ship-section-title"><i data-lucide="images" style="width:13px;height:13px"></i> Galerie</div>';
+    html += '<div class="ship-gallery">';
+    html += `<div class="ship-gallery-featured" onclick="openLightbox(currentShipPhotos,0)"><img src="${legacyPhotos[0]}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>`;
+    if (legacyPhotos.length >= 2) {
+      html += `<div class="ship-gallery-thumb" onclick="openLightbox(currentShipPhotos,1)"><img src="${legacyPhotos[1]}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"></div>`;
+    }
+    if (legacyPhotos.length >= 3) {
+      const moreCount = legacyPhotos.length - 3;
+      html += `<div class="ship-gallery-thumb" onclick="openLightbox(currentShipPhotos,2)" style="position:relative"><img src="${legacyPhotos[2]}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'">`;
+      if (moreCount > 0) html += `<div class="ship-gallery-more">+${moreCount} photo${moreCount > 1 ? 's' : ''}</div>`;
+      html += '</div>';
+    }
+    html += '</div></div>';
+  }
+
+  // ──── LOCATE ON MAP ────
+  if (hasPosition) {
+    let timeAgo = '';
+    if (ship.position_updated) {
+      const d = new Date(ship.position_updated);
+      const ago = Math.round((Date.now() - d.getTime()) / 60000);
+      timeAgo = ago < 60 ? `il y a ${ago} min` : ago < 1440 ? `il y a ${Math.round(ago/60)}h` : `il y a ${Math.round(ago/1440)}j`;
+    }
+    html += '<div class="ship-section" style="text-align:center">';
+    html += `<button onclick="locateShipOnMap(${ship.position_lat},${ship.position_lng});closeShipPopup()" style="width:100%;padding:12px;background:var(--teal);color:#fff;border:none;border-radius:10px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s">
+      <span class="ship-live-dot" style="width:7px;height:7px"></span> Localiser sur la carte
+    </button>`;
+    if (timeAgo) html += `<div style="font-size:.6rem;color:var(--text-lighter);margin-top:6px">Position mise à jour ${timeAgo}</div>`;
+    html += '</div>';
+  }
+
+  // ──── REVIEWS SECTION ────
+  html += '<div class="ship-section">';
+  html += renderReviewsSection(clId, shipId, ship.name);
+  html += '<div id="reviewFormContainer_' + clId + '_' + shipId + '"></div>';
+  html += '</div>';
+
+  document.getElementById('shipPopupScroll').innerHTML = html;
+  document.getElementById('shipPopupBg').classList.add('open');
+  if(window.lucide)lucide.createIcons();
+}
+
+function closeShipPopup() { document.getElementById('shipPopupBg').classList.remove('open'); }
+
+function locateShipOnMap(lat, lng) {
+  // Basculer en mode navires si nécessaire
+  if (currentMapMode !== 'ships') {
+    switchMapMode('ships');
+  }
+  if (mainMap) {
+    mainMap.setView([lat, lng], 8, { animate: true });
+  }
+}
+
+// =====================================================================
+// HELP CENTER
+// =====================================================================
+function openHelp(){
+  document.getElementById('helpOverlay').classList.add('open');
+  if(window.lucide)lucide.createIcons();
+}
+function closeHelp(){
+  document.getElementById('helpOverlay').classList.remove('open');
+  try{localStorage.setItem('cruisemap_help_seen','1')}catch(e){}
+}
+// Auto-show help on first visit
+function checkFirstVisit(){
+  try{if(!localStorage.getItem('cruisemap_help_seen')){setTimeout(()=>openHelp(),1500)}}catch(e){}
+}
+
+// =====================================================================
+// HELPERS
+// =====================================================================
+function clearHighlights() {
+  document.querySelectorAll('.custom-marker.highlighted').forEach(el => el.classList.remove('highlighted'));
+}
+
+function closeDetail() {
+  const panel = document.getElementById('detailPanel');
+  panel.classList.remove('open');
+  panel.classList.remove('sponsored-active');
+  clearHighlights();
+  document.querySelectorAll('.cruise-card').forEach(c => c.classList.remove('active'));
+  activeCruiseLine = null;
+  // Si en mode navires, remontrer tous les navires
+  if (currentMapMode === 'ships') renderShipMarkers();
+}
+
+function openAllNews() {
+  var news = window._currentCruiseNews || [];
+  var title = window._currentCruiseTitle || '';
+  if (!news.length) return;
+  var h = '';
+  news.forEach(function(n) {
+    h += '<a href="' + n.url + '" target="_blank" class="news-card">';
+    if (n.image) h += '<img src="' + n.image + '" alt="" class="news-img">';
+    h += '<div class="news-card-body">';
+    h += '<div class="news-card-title">' + n.title + '</div>';
+    if (n.date) h += '<div class="news-card-date">' + n.date + '</div>';
+    if (n.excerpt) h += '<div style="font-size:.72rem;color:var(--text-light);margin-top:4px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + n.excerpt + '</div>';
+    h += '</div></a>';
+  });
+  document.getElementById('newsPopupTitle').textContent = title + ' — Actualités (' + news.length + ')';
+  document.getElementById('newsPopupScroll').innerHTML = h;
+  document.getElementById('newsPopupBg').classList.add('open');
+}
+function closeAllNews() { document.getElementById('newsPopupBg').classList.remove('open'); }
+
+// =====================================================================
+// SIZE PARAM
+// =====================================================================
+if(new URLSearchParams(window.location.search).get('size')==='small'){document.getElementById('embedContainer').classList.add('size-small');}
+
+// =====================================================================
+// MODAL
+// =====================================================================
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  try { window.parent.postMessage({ type: 'cruise-map-open' }, '*'); } catch(e) {}
+  var slot = document.getElementById('bannerSlot');
+  if (slot && slot.querySelector('#bannerContent').innerHTML.trim()) slot.style.display = 'block';
+  if (!mainMap) {
+    setTimeout(() => { initMainMap(); renderMarkers(); }, 100);
+  } else {
+    setTimeout(() => mainMap.invalidateSize(), 200);
+  }
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+  try { window.parent.postMessage({ type: 'cruise-map-close' }, '*'); } catch(e) {}
+  closeDetail();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// Delegated click handler for popup cruise line links
+document.addEventListener('click', function(e) {
+  var el = e.target.closest('.popup-clickable');
+  if (el && el.dataset.clId) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (el.dataset.shipId) {
+      // Open ship detail directly
+      mainMap.closePopup();
+      openShipDetail(el.dataset.clId, el.dataset.shipId);
+    } else {
+      selectCruiseLine(el.dataset.clId);
+    }
+  }
+});
+
+// =====================================================================
+// EMBED MAP (background)
+// =====================================================================
+function initEmbedMap() {
+  const embedEl = document.getElementById('embedMap');
+  if (!embedEl || embedMapInstance) return;
+  embedMapInstance = L.map(embedEl, {
+    zoomControl: false, attributionControl: false,
+    dragging: false, scrollWheelZoom: false,
+    doubleClickZoom: false, touchZoom: false, keyboard: false
+  }).setView([30, 10], 2);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 4 }).addTo(embedMapInstance);
+  // Add dots for each cruise line
+  allCruiseLines.forEach(cl => {
+    (cl.coordinates || []).forEach(coord => {
+      if (coord.lat == null || coord.lng == null) return;
+      L.marker([coord.lat, coord.lng], {
+        icon: L.divIcon({ className: 'embed-dot-pulse', iconSize: [8, 8], iconAnchor: [4, 4] })
+      }).addTo(embedMapInstance);
+    });
+  });
+}
+
+// =====================================================================
+// ANALYTICS TRACKING
+// =====================================================================
+const sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+const sessionStart = Date.now();
+
+function trackEvent(type, data = {}) {
+  try {
+    if (localStorage.getItem('cruise_admin_notrack') === '1') return;
+    db.collection('analytics_cruise').add({
+      type, ...data,
+      session_id: sessionId,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      user_agent: navigator.userAgent,
+      screen: window.innerWidth + 'x' + window.innerHeight,
+      referrer: document.referrer || ''
+    });
+  } catch(e) {}
+}
+
+const _origOpenModal = openModal;
+openModal = function() { _origOpenModal(); trackEvent('visit', { entry: 'modal_open' }); };
+
+const _origSelectCruiseLine = selectCruiseLine;
+selectCruiseLine = function(id) {
+  const cl = allCruiseLines.find(c => c.id === id);
+  trackEvent('view_cruise', { cruise_id: id, cruise_title: cl ? cl.title : '', cruise_zones: cl ? (cl.zones || []).join(', ') : '' });
+  _origSelectCruiseLine(id);
+};
+
+const searchInputEl = document.getElementById('searchInput');
+if (searchInputEl) {
+  let analyticsDebounce = null;
+  searchInputEl.addEventListener('input', function() {
+    clearTimeout(analyticsDebounce);
+    analyticsDebounce = setTimeout(() => {
+      const q = this.value.trim();
+      if (q.length >= 2) { trackEvent('search', { query: q, results_count: filteredCruiseLines.length }); }
+    }, 1500);
+  });
+}
+
+const _origApplyFilters = applyFilters;
+applyFilters = function() {
+  _origApplyFilters();
+  const type = document.getElementById('filterType').value;
+  const zone = document.getElementById('filterZone').value;
+  const gamme = document.getElementById('filterGamme').value;
+  const activeChips = [];
+  document.querySelectorAll('.filter-chip.active').forEach(c => activeChips.push(c.textContent));
+  if (type || zone || gamme || activeChips.length > 0) {
+    trackEvent('filter', { type: type||'', zone: zone||'', gamme: gamme||'', tags: activeChips.join(', '), results_count: filteredCruiseLines.length });
+  }
+};
+
+document.addEventListener('click', function(e) {
+  const link = e.target.closest('a[href*="tourmag.com"]');
+  if (link) { trackEvent('click_url', { target_url: link.href, cruise_title: activeCruiseLine ? activeCruiseLine.title : '' }); }
+});
+
+window.addEventListener('beforeunload', function() {
+  const duration = Math.round((Date.now() - sessionStart) / 1000);
+  try {
+    if (localStorage.getItem('cruise_admin_notrack') !== '1') {
+      db.collection('analytics_cruise').add({
+        type: 'session_end', session_id: sessionId, duration_seconds: duration,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+  } catch(e) {}
+});
+
+trackEvent('page_load', { entry: 'embed_view' });
+
+// =====================================================================
+// INIT
+// =====================================================================
+loadData();
+
+try {
+  var embedEl = document.getElementById('embedContainer');
+  if (embedEl) { window.parent.postMessage({ type: 'cruise-map-resize', height: embedEl.offsetHeight }, '*'); }
+} catch(e) {}
+</script>
+</body>
+</html>
