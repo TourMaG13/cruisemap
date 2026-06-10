@@ -64,10 +64,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;height:1
 @keyframes btnPulse{0%,100%{box-shadow:0 4px 15px rgba(27,110,194,0.4);transform:scale(1)}50%{box-shadow:0 4px 25px rgba(27,110,194,0.7);transform:scale(1.04)}}
 .embed-container:hover .embed-overlay{opacity:0.95}
 .embed-dot-pulse{width:8px;height:8px;border-radius:50%;background:var(--blue-dark);position:relative;box-shadow:0 0 4px rgba(27,110,194,0.6)}
-.embed-dot-pulse::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1.5px solid var(--blue-dark);opacity:0;animation:embedRing 2.2s ease-out infinite}
-.embed-dot-pulse:nth-child(2n)::after{animation-delay:0.7s}
-.embed-dot-pulse:nth-child(3n)::after{animation-delay:1.4s}
-@keyframes embedRing{0%{transform:scale(0.6);opacity:0.7}100%{transform:scale(2);opacity:0}}
+.embed-ship{display:none}
 .embed-container.size-small{width:300px;height:245px;border-radius:0}
 .embed-container.size-small .embed-overlay-content{padding:14px 20px;width:260px;min-height:160px}
 .embed-container.size-small .embed-overlay h2{font-size:1rem}
@@ -2889,15 +2886,138 @@ function initEmbedMap() {
     doubleClickZoom: false, touchZoom: false, keyboard: false
   }).setView([46, 15], 4);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 6 }).addTo(embedMapInstance);
-  // Add dots for each cruise line
-  allCruiseLines.forEach(cl => {
-    (cl.coordinates || []).forEach(coord => {
-      if (coord.lat == null || coord.lng == null) return;
-      L.marker([coord.lat, coord.lng], {
-        icon: L.divIcon({ className: 'embed-dot-pulse', iconSize: [8, 8], iconAnchor: [4, 4] })
-      }).addTo(embedMapInstance);
+
+  // River routes with detailed paths
+  const routes = [
+    {color:'#1B6EC2', weight:2.5, delay:0, name:'Rhin',
+     path:[[52.37,4.90],[52.00,5.50],[51.84,5.87],[51.44,6.77],[51.22,6.78],[50.94,6.96],[50.73,7.10],[50.36,7.60],[50.00,8.27],[49.99,8.42],[49.45,8.44],[48.87,8.31],[48.58,7.76],[47.56,7.59]]},
+    {color:'#2563EB', weight:2.5, delay:2, name:'Danube',
+     path:[[48.57,13.46],[48.31,14.29],[48.24,14.95],[48.20,16.37],[48.14,16.95],[47.81,17.07],[47.75,17.65],[47.50,19.04]]},
+    {color:'#0EA5A2', weight:2.5, delay:4, name:'Seine',
+     path:[[48.86,2.35],[48.93,2.27],[49.00,1.99],[49.07,1.88],[49.19,1.50],[49.26,1.10],[49.36,0.70],[49.44,0.23]]},
+    {color:'#1E8E5F', weight:2.5, delay:6, name:'Douro',
+     path:[[41.14,-8.61],[41.14,-8.30],[41.16,-8.09],[41.15,-7.78],[41.17,-7.50],[41.08,-7.25],[41.05,-7.07],[41.02,-6.95]]},
+    {color:'#7C3AED', weight:2.5, delay:8, name:'Rhône',
+     path:[[45.76,4.83],[45.52,4.83],[45.19,4.80],[44.93,4.81],[44.56,4.80],[44.13,4.81],[43.95,4.81],[43.68,4.63]]},
+    {color:'#DC2626', weight:2, delay:10, name:'Elbe',
+     path:[[50.08,14.44],[50.41,14.05],[50.78,13.90],[51.05,13.74],[51.34,12.37],[51.80,12.25],[52.52,13.41],[53.10,11.40],[53.55,9.99]]},
+    {color:'#F59E0B', weight:2, delay:12, name:'Mékong',
+     path:[[10.78,106.70],[10.95,106.35],[11.05,105.82],[11.20,105.20],[11.55,104.92]]},
+    {color:'#6366F1', weight:2, delay:1, name:'Méditerranée',
+     path:[[43.30,5.37],[43.10,6.10],[42.70,6.50],[42.20,8.00],[41.90,8.73],[41.38,9.16],[40.85,14.27],[39.20,14.90],[38.12,13.36],[37.50,15.09]]},
+    {color:'#0EA5A2', weight:2, delay:5, name:'Loire',
+     path:[[47.22,-1.55],[47.27,-1.10],[47.30,-0.68],[47.38,-0.20],[47.39,0.35],[47.40,0.69]]},
+    {color:'#1B6EC2', weight:2, delay:9, name:'Pô',
+     path:[[45.44,12.34],[45.38,12.10],[45.15,11.78],[45.05,11.40],[45.04,11.10],[44.95,10.70]]},
+  ];
+
+  // For each route: draw a faded background line, then animate a bright line on top
+  const animState = [];
+
+  routes.forEach((route, i) => {
+    // Faded background trace
+    L.polyline(route.path, {
+      color: route.color, weight: route.weight * 0.6, opacity: 0.12,
+      smoothFactor: 1.5, lineCap: 'round', lineJoin: 'round'
+    }).addTo(embedMapInstance);
+
+    // Animated bright line (starts empty)
+    const line = L.polyline([], {
+      color: route.color, weight: route.weight, opacity: 0.7,
+      smoothFactor: 1.5, lineCap: 'round', lineJoin: 'round'
+    }).addTo(embedMapInstance);
+
+    // Glowing head dot
+    const head = L.circleMarker(route.path[0], {
+      radius: 3.5, color: route.color, fillColor: '#fff',
+      fillOpacity: 1, weight: 2, opacity: 0
+    }).addTo(embedMapInstance);
+
+    animState.push({
+      route, line, head,
+      segIdx: 0, segProgress: 0,
+      drawnPoints: [route.path[0]],
+      phase: 'waiting', // waiting → drawing → pause → fading → waiting
+      timer: route.delay * 60, // delay in frames (60fps)
+      totalCycle: 0
     });
   });
+
+  function lerp(a, b, t) {
+    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  }
+
+  function animate() {
+    animState.forEach(s => {
+      if (s.phase === 'waiting') {
+        s.timer--;
+        if (s.timer <= 0) {
+          s.phase = 'drawing';
+          s.segIdx = 0;
+          s.segProgress = 0;
+          s.drawnPoints = [s.route.path[0]];
+          s.line.setLatLngs(s.drawnPoints);
+          s.line.setStyle({ opacity: 0.75 });
+          s.head.setStyle({ opacity: 1 });
+          s.head.setLatLng(s.route.path[0]);
+        }
+        return;
+      }
+
+      if (s.phase === 'drawing') {
+        var speed = 0.02 + 0.005 * Math.sin(s.totalCycle * 0.03);
+        s.segProgress += speed;
+        s.totalCycle++;
+
+        if (s.segProgress >= 1) {
+          s.segProgress = 0;
+          s.segIdx++;
+          if (s.segIdx >= s.route.path.length - 1) {
+            // Finished drawing
+            s.line.setLatLngs(s.route.path);
+            s.head.setLatLng(s.route.path[s.route.path.length - 1]);
+            s.phase = 'pause';
+            s.timer = 120; // 2 sec pause
+            return;
+          }
+          s.drawnPoints.push(s.route.path[s.segIdx]);
+        }
+
+        var from = s.route.path[s.segIdx];
+        var to = s.route.path[Math.min(s.segIdx + 1, s.route.path.length - 1)];
+        var pt = lerp(from, to, s.segProgress);
+        var pts = s.drawnPoints.slice();
+        pts.push(pt);
+        s.line.setLatLngs(pts);
+        s.head.setLatLng(pt);
+        return;
+      }
+
+      if (s.phase === 'pause') {
+        s.timer--;
+        if (s.timer <= 0) {
+          s.phase = 'fading';
+          s.timer = 40;
+        }
+        return;
+      }
+
+      if (s.phase === 'fading') {
+        s.timer--;
+        var opacity = s.timer / 40 * 0.75;
+        s.line.setStyle({ opacity: Math.max(0, opacity) });
+        s.head.setStyle({ opacity: Math.max(0, opacity) });
+        if (s.timer <= 0) {
+          s.phase = 'waiting';
+          s.timer = 80 + Math.random() * 120; // Random wait before restart
+          s.line.setLatLngs([]);
+        }
+        return;
+      }
+    });
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
 }
 
 // =====================================================================
