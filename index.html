@@ -395,7 +395,6 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;height:1
 .marker-zone-label{position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);background:rgba(11,29,51,0.82);color:#fff;font-size:0.58rem;padding:2px 7px;border-radius:6px;white-space:nowrap;font-weight:600;pointer-events:none;letter-spacing:0.2px;line-height:1.3;box-shadow:0 1px 4px rgba(0,0,0,0.15)}
 .marker-zone-label.river-label{background:rgba(14,165,162,0.88);font-weight:700}
 /* Hide zone labels at low zoom */
-.zoom-labels-hidden .marker-zone-label{display:none}
 .custom-marker.charterer{background:linear-gradient(135deg,#F59E0B,#FB923C);border:2.5px dashed #fff;width:24px;height:24px;border-radius:50%;box-shadow:0 2px 8px rgba(245,158,11,0.45)}
 .custom-marker.charterer::before{content:'🤝';font-size:11px;line-height:18px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;filter:grayscale(.3) brightness(1.1)}
 .custom-marker.charterer:hover{transform:scale(1.4);box-shadow:0 4px 16px rgba(245,158,11,0.6)}
@@ -464,6 +463,12 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;height:1
 /* Tooltip overrides for destination markers */
 .dest-tooltip{font-family:'Poppins',system-ui,sans-serif!important;font-size:.78rem!important;font-weight:600!important;padding:6px 12px!important;border-radius:8px!important;box-shadow:0 4px 16px rgba(0,0,0,.15)!important;border:1px solid rgba(0,0,0,.06)!important;white-space:nowrap!important}
 .dest-tooltip .leaflet-tooltip-arrow{display:none}
+.dest-label{background:none!important;border:none!important;box-shadow:none!important;font-size:.6rem;font-weight:700;letter-spacing:.2px;padding:2px 5px!important;pointer-events:auto!important;cursor:pointer;white-space:nowrap}
+.dest-label .leaflet-tooltip-arrow{display:none}
+.dest-label.river-label-tt{background:rgba(8,127,124,.88)!important;color:#fff!important;font-size:.62rem;font-weight:700;padding:3px 9px 3px 7px!important;border-radius:10px!important;letter-spacing:.3px;box-shadow:0 1px 4px rgba(0,0,0,.15)!important}
+.dest-label.maritime-label-tt{background:rgba(27,110,194,.82)!important;color:#fff!important;font-size:.62rem;font-weight:700;padding:3px 9px!important;border-radius:8px!important;box-shadow:0 1px 3px rgba(0,0,0,.12)!important}
+.sponsor-logo-pin{background:#fff!important;border:3px solid #D4A843!important;border-radius:50%!important;padding:5px!important;box-shadow:0 3px 12px rgba(0,0,0,.3),0 0 0 3px rgba(212,168,67,.2)!important;object-fit:contain!important}
+.cm-sponsored{filter:drop-shadow(0 0 6px rgba(212,168,67,.6))}
 
 /* Banner slot */
 .banner-slot{display:none;border-bottom:1px solid var(--border);position:relative;z-index:2;background:#fff;flex-shrink:0}
@@ -499,7 +504,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;height:1
 .cruisemap-toast.error{background:linear-gradient(135deg,var(--red),#DC2626)}
 
 /* Map legend */
-.map-legend{position:absolute;bottom:16px;right:16px;z-index:10;background:#fff;border-radius:10px;padding:10px 14px;box-shadow:0 2px 10px rgba(0,0,0,0.12);border:1px solid var(--border);font-size:.7rem;display:flex;flex-direction:column;gap:6px}
+.map-legend{position:absolute;bottom:16px;right:16px;z-index:1005;background:#fff;border-radius:10px;padding:10px 14px;box-shadow:0 2px 10px rgba(0,0,0,0.12);border:1px solid var(--border);font-size:.7rem;display:flex;flex-direction:column;gap:6px;max-width:220px;transition:right .25s ease}
 .map-legend-title{font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:.4px;color:var(--text-light);margin-bottom:2px}
 .map-legend-item{display:flex;align-items:center;gap:8px;color:var(--text)}
 .map-legend-dot{width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.2);flex-shrink:0}
@@ -588,7 +593,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;height:1
   <div class="embed-map" id="embedMap"></div>
   <div class="embed-overlay">
     <div class="embed-overlay-content">
-      <h2>🚢 Carte des Croisières Fluviales</h2>
+      <h2><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:4px"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v-3"/></svg> Carte des Croisières Fluviales</h2>
       <p>Trouvez votre compagnie de croisière</p>
       <div class="embed-carousel" id="embedCarousel"></div>
       <div class="embed-counter">
@@ -606,7 +611,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;height:1
     <!-- Topbar -->
     <div class="topbar">
       <div class="topbar-left">
-        🚢 CruiseMAP
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:4px"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v-3"/></svg> CruiseMAP
         <span class="topbar-count" id="topbarCount">0</span>
       </div>
       <button class="btn-close" onclick="closeModal()">✕</button>
@@ -652,30 +657,27 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;height:1
         <!-- View switch -->
         <div class="map-switch" id="mapSwitch">
           <button class="map-switch-btn active" id="switchDestinations" onclick="switchMapMode('destinations')">
-            <span class="switch-icon">📍</span> Destinations
+            <span class="switch-icon">📍</span> Zone de navigation
           </button>
           <button class="map-switch-btn" id="switchShips" onclick="switchMapMode('ships')">
-            <span class="switch-icon">🚢</span> Navires <span class="ship-live-dot"></span>
+            <span class="switch-icon">🚢</span> Temps réel <span class="ship-live-dot"></span>
           </button>
-          <button class="map-switch-btn" id="shipViewAllBtn" style="display:none" onclick="activeCruiseLine=null;document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));renderShipMarkers();">
-            <span class="switch-icon">📋</span> Liste
-          </button>
+
         </div>
         <button class="map-reset-btn" onclick="resetMapView()" title="Vue mondiale">🌍</button>
         <button class="map-help-btn" onclick="openHelp()" title="Aide"><i data-lucide="help-circle" style="width:16px;height:16px"></i></button>
         <div class="map-legend" id="mapLegend">
-          <div class="map-legend-title">📍 Destinations</div>
+          <div class="map-legend-title">📍 Zone de navigation</div>
           <div style="font-size:.62rem;color:var(--text-lighter);margin-bottom:6px;line-height:1.3">Chaque point = une zone de croisière</div>
           <div class="map-legend-item"><div class="map-legend-dot" style="background:linear-gradient(135deg,var(--ct-maritime),var(--blue-light))"></div> Zone maritime</div>
           <div class="map-legend-item"><div class="map-legend-dot river" style="background:linear-gradient(135deg,var(--ct-fluviale),#0DC8A0)"></div> Fleuve navigable</div>
-          <div class="map-legend-item"><div class="map-legend-dot" style="background:linear-gradient(135deg,var(--gold),var(--orange))"></div> Sponsorisé</div>
         </div>
         <div class="map-legend" id="mapLegendShips" style="display:none">
-          <div class="map-legend-title">🚢 Navires</div>
-          <div style="font-size:.62rem;color:var(--text-lighter);margin-bottom:6px;line-height:1.3">Position en temps réel (AIS)</div>
+          <div class="map-legend-title">🚢 Localisation en temps réel</div>
+          <div style="font-size:.62rem;color:var(--text-lighter);margin-bottom:6px;line-height:1.3">Position via signal AIS</div>
           <div class="map-legend-item"><div style="width:18px;height:18px;background:#1B6EC2;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2);flex-shrink:0;position:relative"><div style="position:absolute;top:-2px;right:-2px;width:6px;height:6px;background:#22C55E;border-radius:50%;border:1px solid #fff"></div></div> En navigation</div>
           <div class="map-legend-item"><div style="width:18px;height:18px;background:#64748b;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2);flex-shrink:0;position:relative"><div style="position:absolute;top:-2px;right:-2px;width:6px;height:6px;background:#22C55E;border-radius:50%;border:1px solid #fff"></div></div> À quai</div>
-          <div class="map-legend-item"><div class="map-legend-dot" style="background:linear-gradient(135deg,var(--ct-maritime),var(--blue-light))"></div> Zone de départ</div>
+          <div style="margin-top:8px;padding:7px 10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:6px;font-size:.6rem;color:#92400e;line-height:1.4">⚠️ Seuls les navires équipés d'un transpondeur AIS actif apparaissent. La position de certains navires peut être indisponible ou différée.</div>
         </div>
         <div id="mainMap"></div>
         <div class="map-loading" id="mapLoading">
@@ -702,7 +704,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;height:1
       <button class="filters-popup-close" onclick="closeFiltersPopup()">✕</button>
     </div>
     <div class="filters-popup-body">
-      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:6px"><i data-lucide="building-2" style="width:13px;height:13px"></i> Compagnie</div>
+      <div style="font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:6px"><i data-lucide="building-2" style="width:14px;height:14px"></i> Recherche par compagnie</div>
       <div class="filter-row">
         <label class="filter-label"><i data-lucide="ship" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Type de croisière</label>
         <select class="filter-select" id="filterType" onchange="applyFilters()">
@@ -729,7 +731,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;height:1
       </div>
 
       <div style="border-top:2px solid var(--border);margin:16px 0;padding-top:14px">
-        <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--teal);margin-bottom:12px;display:flex;align-items:center;gap:6px"><i data-lucide="anchor" style="width:13px;height:13px"></i> Navire</div>
+        <div style="font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--teal);margin-bottom:12px;display:flex;align-items:center;gap:6px"><i data-lucide="anchor" style="width:14px;height:14px"></i> Recherche par navire</div>
       </div>
       <div class="filter-row">
         <label class="filter-label"><i data-lucide="map-pin" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Zone de navigation</label>
@@ -1361,7 +1363,6 @@ async function loadData() {
     loadBanner();
     try { await loadReviews(); } catch(e) { console.warn('Reviews not loaded:', e); }
     try { await loadLiveShipPositions(); } catch(e) { console.warn('Live positions not loaded:', e); }
-    checkFirstVisit();
     if(window.lucide)lucide.createIcons();
     // Hide loading states
     var ml = document.getElementById('mapLoading'); if (ml) ml.classList.add('hidden');
@@ -1621,6 +1622,44 @@ function applyFilters() {
   renderMarkers();
   updateCount();
   updateActiveFiltersCount();
+
+  // Zoom to selected zone (dropdown or chips)
+  if (mainMap) {
+    const zoneVal = document.getElementById('filterZone').value;
+    const activeZoneChips = [...document.querySelectorAll('#chipsShipZones .filter-chip.active')].map(c => c.dataset.zone);
+    const zoneNames = [];
+    if (zoneVal) zoneNames.push(zoneVal);
+    activeZoneChips.forEach(z => zoneNames.push(z));
+
+    if (zoneNames.length > 0) {
+      // Collect all matching coords
+      const zoomCoords = [];
+      zoneNames.forEach(name => {
+        const key = name.toLowerCase().trim();
+        // Try exact match, then first part of composite names (e.g. "Rhône / Saône" → "rhône")
+        let coord = ZONE_COORDS[key];
+        if (!coord && key.includes('/')) {
+          coord = ZONE_COORDS[key.split('/')[0].trim()];
+        }
+        if (coord) zoomCoords.push(coord);
+      });
+
+      if (zoomCoords.length === 1) {
+        mainMap.setView([zoomCoords[0][0], zoomCoords[0][1]], 5, { animate: true });
+      } else if (zoomCoords.length > 1) {
+        mainMap.fitBounds(L.latLngBounds(zoomCoords.map(c => [c[0], c[1]])), { padding: [50, 50], maxZoom: 6, animate: true });
+      } else {
+        // Fallback: fit bounds of all filtered cruise lines
+        const allCoords = [];
+        filteredCruiseLines.forEach(cl => {
+          (cl.coordinates || []).forEach(c => allCoords.push([c.lat, c.lng]));
+        });
+        if (allCoords.length > 0) {
+          mainMap.fitBounds(L.latLngBounds(allCoords), { padding: [50, 50], maxZoom: 6, animate: true });
+        }
+      }
+    }
+  }
 }
 
 function toggleCapFilter(el) { el.classList.toggle('active'); applyFilters(); }
@@ -1979,38 +2018,16 @@ function initMainMap() {
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     attribution: '© OpenStreetMap © CARTO | © TourMaG.com — CruiseMAP', maxZoom: 18, noWrap: true
   }).addTo(mainMap);
-  markerClusterGroup = L.markerClusterGroup({
-    maxClusterRadius: 45,
-    spiderfyOnMaxZoom: true,
-    showCoverageOnHover: false,
-    iconCreateFunction: function(cluster) {
-      const count = cluster.getChildCount();
-      let size = 'small';
-      if (count > 20) size = 'large';
-      else if (count > 5) size = 'medium';
-      return L.divIcon({
-        html: '<div>' + count + '</div>',
-        className: 'marker-cluster marker-cluster-' + size,
-        iconSize: L.point(36, 36)
-      });
-    }
-  });
+  markerClusterGroup = L.featureGroup();
   mainMap.addLayer(markerClusterGroup);
   if (!('ontouchstart' in window)) {
-    mainMap.on('click', function() { mainMap.closePopup(); closeDestSpot(); });
+    mainMap.on('click', function() {
+      if (window._markerJustClicked) { window._markerJustClicked = false; return; }
+      mainMap.closePopup(); closeDestSpot();
+    });
   }
   // Show zone labels only when zoomed in enough
-  function updateZoneLabels() {
-    const mapEl = document.getElementById('mainMap');
-    if (!mapEl) return;
-    if (mainMap.getZoom() >= 6) {
-      mapEl.classList.remove('zoom-labels-hidden');
-    } else {
-      mapEl.classList.add('zoom-labels-hidden');
-    }
-  }
-  mainMap.on('zoomend', updateZoneLabels);
-  updateZoneLabels();
+  // Zone labels always visible (no zoom hiding)
 }
 
 function resetMapView() {
@@ -2036,6 +2053,7 @@ function switchMapMode(mode) {
   } else {
     markerClusterGroup.clearLayers();
     markers = [];
+    hideDefaultSponsorLogos();
     renderShipMarkers();
   }
 }
@@ -2046,8 +2064,10 @@ function switchMapMode(mode) {
 function renderMarkers() {
   if (!mainMap) return;
   markerClusterGroup.clearLayers();
-  markers.forEach(m => { if (m._isSponsored && mainMap.hasLayer(m)) mainMap.removeLayer(m); });
   markers = [];
+  // Clear default sponsor logos
+  _defaultSponsorLogos.forEach(m => { if (mainMap.hasLayer(m)) mainMap.removeLayer(m); });
+  _defaultSponsorLogos = [];
 
   // Build set of known river names from all cruise line data
   const knownRivers = new Set();
@@ -2068,51 +2088,75 @@ function renderMarkers() {
 
   pointMap.forEach(point => {
     const hasSpon = point.entries.some(e => e.cl.sponsored);
-    const sponWithLogo = point.entries.find(e => e.cl.sponsored && e.cl.logo_url);
-    // Detect river by zone name, not by cruise type
     const isRiver = knownRivers.has(point.zone);
-    let icon;
-    if (sponWithLogo) {
-      const logo = sponWithLogo.cl.logo_url;
-      const otherCount = point.entries.length - 1;
-      const countBadge = otherCount > 0 ? '<div class="marker-count">+' + otherCount + ' autre' + (otherCount > 1 ? 's' : '') + '</div>' : '';
-      icon = L.divIcon({
-        className: 'custom-marker sponsored sponsored-logo',
-        iconSize: [56, 56], iconAnchor: [28, 28],
-        html: '<img src="' + logo + '" alt="" onerror="this.parentNode.classList.remove(\'sponsored-logo\');this.remove()"><div class="sponsor-star">★</div>' + countBadge
-      });
-    } else if (isRiver && !hasSpon) {
-      const riverLabel = point.zone || '';
-      icon = L.divIcon({ className: 'custom-marker river', iconSize: [24, 20], iconAnchor: [12, 10],
-        html: '<span class="marker-zone-label river-label">〰 ' + riverLabel + '</span>'
-      });
+
+    // Style selon le type
+    let radius, color, fillColor, weight, fillOpacity;
+    if (hasSpon) {
+      radius = 13; color = '#D4A843'; fillColor = '#D4A843'; weight = 3; fillOpacity = 0.85;
+    } else if (isRiver) {
+      radius = 10; color = '#0EA5A2'; fillColor = '#0EA5A2'; weight = 2; fillOpacity = 0.8;
     } else {
-      const size = hasSpon ? [28, 28] : [20, 20];
-      const zoneLabel = point.zone || '';
-      icon = L.divIcon({ className: 'custom-marker' + (hasSpon ? ' sponsored' : ''), iconSize: size, iconAnchor: [size[0]/2, size[1]/2],
-        html: '<span class="marker-zone-label">' + zoneLabel + '</span>'
-      });
+      radius = 10; color = '#1B6EC2'; fillColor = '#1B6EC2'; weight = 2; fillOpacity = 0.8;
     }
 
-    const marker = L.marker([point.lat, point.lng], { icon, zIndexOffset: hasSpon ? 1000 : 0 });
-    // Store point data for sidebar injection on click
+    const marker = L.circleMarker([point.lat, point.lng], {
+      radius, color: '#fff', fillColor, weight, fillOpacity,
+      className: hasSpon ? 'cm-sponsored' : (isRiver ? 'cm-river' : 'cm-maritime')
+    });
+
     marker._destPoint = point;
     marker._destIsRiver = isRiver;
+    marker._isSponsored = hasSpon;
 
-    // Tooltip (léger, au hover) — nom de la destination + nombre de compagnies
-    const tooltipLabel = (point.zone || '?') + '  ·  ' + point.entries.length + ' compagnie' + (point.entries.length > 1 ? 's' : '');
-    marker.bindTooltip(tooltipLabel, { direction: 'top', offset: [0, -8], className: 'dest-tooltip' });
-
-    // Clic → ouvrir le panneau destination dans le sidebar
-    marker.on('click', function() { openDestSpot(this._destPoint, this._destIsRiver); });
-
-    if (hasSpon && sponWithLogo) {
-      marker._isSponsored = true;
-      marker.addTo(mainMap);
-    } else {
-      markerClusterGroup.addLayer(marker);
+    // Zone label with company count (permanent)
+    const zoneLabel = point.zone || '';
+    if (zoneLabel) {
+      const prefix = isRiver ? '〰 ' : '';
+      const n = point.entries.length;
+      const countWord = n > 1 ? ' compagnies' : ' compagnie';
+      const labelHtml = prefix + zoneLabel + '<span style="opacity:.75;font-weight:400"> · ' + n + countWord + '</span>';
+      marker.bindTooltip(labelHtml, {
+        permanent: true, direction: 'bottom', offset: [0, 6],
+        className: isRiver ? 'dest-label river-label-tt' : 'dest-label maritime-label-tt'
+      });
+      // Rendre le cartouche cliquable
+      marker.on('tooltipopen', function() {
+        var ttEl = this.getTooltip() ? this.getTooltip().getElement() : null;
+        if (ttEl && !ttEl._destClickBound) {
+          ttEl._destClickBound = true;
+          var self = this;
+          ttEl.addEventListener('click', function(e) {
+            e.stopPropagation();
+            window._markerJustClicked = true;
+            openDestSpot(self._destPoint, self._destIsRiver);
+          });
+        }
+      });
     }
+
+
+
+    marker.on('click', function() { window._markerJustClicked = true; openDestSpot(this._destPoint, this._destIsRiver); });
+
+    markerClusterGroup.addLayer(marker);
     markers.push(marker);
+
+    // Ajouter le logo au-dessus des points sponsorisés
+    if (hasSpon) {
+      const sponEntry = point.entries.find(e => e.cl.sponsored && e.cl.logo_url);
+      if (sponEntry) {
+        var logoIcon = L.icon({
+          iconUrl: sponEntry.cl.logo_url,
+          iconSize: [72, 72],
+          iconAnchor: [36, 76],
+          className: 'sponsor-logo-pin'
+        });
+        var logoM = L.marker([point.lat, point.lng], { icon: logoIcon, interactive: false, pane: 'markerPane' });
+        logoM.addTo(mainMap);
+        _defaultSponsorLogos.push(logoM);
+      }
+    }
   });
 }
 
@@ -2246,6 +2290,8 @@ function openDestSpot(point, isRiver) {
     <div class="dest-spot-name">${point.zone || ''}</div>
     <div class="dest-spot-count">${count} compagnie${count > 1 ? 's' : ''} ${count > 1 ? 'naviguent' : 'navigue'} ici</div>
   </div>`;
+  // Liste des compagnies
+  html += '<div style="padding:8px 14px 4px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-light)">🏢 Compagnies</div>';
   html += '<div class="dest-spot-list">';
   point.entries.forEach(e => {
     const cl = e.cl;
@@ -2258,6 +2304,31 @@ function openDestSpot(point, isRiver) {
     </div>`;
   });
   html += '</div>';
+
+  // Liste des navires
+  const allShips = [];
+  point.entries.forEach(e => {
+    const cl = e.cl;
+    (cl.ships || []).forEach(s => {
+      if (s.name) allShips.push({ ship: s, company: cl.title, clId: cl.id });
+    });
+  });
+  if (allShips.length > 0) {
+    html += '<div style="padding:8px 14px 4px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-light);border-top:1px solid var(--border);margin-top:6px">🚢 Navires (' + allShips.length + ')</div>';
+    html += '<div class="dest-spot-list" style="max-height:200px">';
+    allShips.sort((a,b) => a.ship.name.localeCompare(b.ship.name, 'fr'));
+    allShips.forEach(item => {
+      const imgH = item.ship.image
+        ? '<img class="dest-spot-logo" src="' + item.ship.image + '" alt="" style="border-radius:4px" onerror="this.style.display=\'none\'">'
+        : '<div class="dest-spot-logo-init" style="border-radius:4px;font-size:.55rem">🚢</div>';
+      html += '<div class="dest-spot-item" onclick="selectCruiseLine(\'' + item.clId + '\')">' +
+        imgH +
+        '<div style="overflow:hidden"><div style="font-size:.8rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + item.ship.name + '</div>' +
+        '<div style="font-size:.62rem;color:var(--text-light)">' + item.company + (item.ship.capacity ? ' · ' + item.ship.capacity + ' pax' : '') + '</div></div>' +
+      '</div>';
+    });
+    html += '</div>';
+  }
 
   spot.innerHTML = html;
   spot.classList.add('open');
@@ -2277,15 +2348,67 @@ function closeDestSpot() {
 function selectCruiseLine(id) {
   const cl = allCruiseLines.find(c => c.id === id);
   if (!cl) return;
+
+  // Toggle : si même compagnie déjà sélectionnée, on désélectionne
+  if (activeCruiseLine && activeCruiseLine.id === id) {
+    closeDetail();
+    return;
+  }
+
   activeCruiseLine = cl;
+
+  // Si en mode navires, basculer vers zone de navigation
+  if (currentMapMode === 'ships') {
+    switchMapMode('destinations');
+  }
 
   clearHighlights();
   document.querySelectorAll('.cruise-card').forEach(c => c.classList.remove('active'));
   const card = document.querySelector(`.cruise-card[data-id="${id}"]`);
   if (card) { card.classList.add('active'); card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
 
-  // Zoom sur les zones de ce croisiériste
+  // Couleur selon statut sponsorisé
+  const isSpon = cl.sponsored === true;
+  const dotColor = isSpon ? '#D4A843' : '#0EA5A2';
+  const dotRadius = isSpon ? 10 : 9;
+
+  // Filtrer : masquer TOUS les marqueurs, ne montrer que ceux de cette compagnie
   const coords = cl.coordinates || [];
+  const clCoordKeys = new Set(coords.map(c => c.lat.toFixed(2) + ',' + c.lng.toFixed(2)));
+  markers.forEach(m => {
+    const ll = m.getLatLng();
+    const mKey = ll.lat.toFixed(2) + ',' + ll.lng.toFixed(2);
+    if (clCoordKeys.has(mKey)) {
+      m.setStyle({ fillColor: dotColor, color: '#fff', fillOpacity: 0.9, radius: dotRadius, weight: 2 });
+      m._highlighted = true;
+      // Show permanent tooltip for selected
+      if (m.getTooltip()) m.openTooltip();
+    } else {
+      // Hide by making invisible (keep in featureGroup for click handlers)
+      m.setStyle({ fillOpacity: 0, opacity: 0, radius: 0 });
+      if (m.getTooltip()) m.closeTooltip();
+      m._hidden = true;
+    }
+  });
+
+  // Masquer les logos par défaut et ajouter ceux de la compagnie sélectionnée
+  hideDefaultSponsorLogos();
+  clearSponsorLogos();
+  if (isSpon && cl.logo_url) {
+    coords.forEach(coord => {
+      var logoIcon = L.icon({
+        iconUrl: cl.logo_url,
+        iconSize: [72, 72],
+        iconAnchor: [36, 76],
+        className: 'sponsor-logo-pin'
+      });
+      var logoMarker = L.marker([coord.lat, coord.lng], { icon: logoIcon, interactive: false });
+      logoMarker.addTo(mainMap);
+      _sponsorLogoMarkers.push(logoMarker);
+    });
+  }
+
+  // Zoom sur les zones de ce croisiériste
   if (coords.length > 0 && mainMap) {
     if (coords.length === 1) {
       mainMap.setView([coords[0].lat, coords[0].lng], 5, { animate: true });
@@ -2293,32 +2416,32 @@ function selectCruiseLine(id) {
       const bounds = L.latLngBounds(coords.map(c => [c.lat, c.lng]));
       mainMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 6, animate: true });
     }
-
-    // Highlight markers
-    setTimeout(() => {
-      const clCoordKeys = new Set(coords.map(c => c.lat.toFixed(2) + ',' + c.lng.toFixed(2)));
-      markers.forEach(m => {
-        const ll = m.getLatLng();
-        const mKey = ll.lat.toFixed(2) + ',' + ll.lng.toFixed(2);
-        if (clCoordKeys.has(mKey)) {
-          const el = m.getElement ? m.getElement() : m._icon;
-          if (el) el.classList.add('highlighted');
-        }
-      });
-    }, 400);
-  }
-
-  // Si en mode navires, rafraîchir les marqueurs pour ce croisiériste
-  if (currentMapMode === 'ships') {
-    renderShipMarkers();
   }
 
   // Remplir le panel de détail
   renderDetailPanel(cl);
 }
 
+var _sponsorLogoMarkers = [];
+var _defaultSponsorLogos = [];
+
+function clearSponsorLogos() {
+  _sponsorLogoMarkers.forEach(m => { if (mainMap && mainMap.hasLayer(m)) mainMap.removeLayer(m); });
+  _sponsorLogoMarkers = [];
+}
+
+function hideDefaultSponsorLogos() {
+  _defaultSponsorLogos.forEach(m => { if (mainMap && mainMap.hasLayer(m)) mainMap.removeLayer(m); });
+}
+
+function showDefaultSponsorLogos() {
+  _defaultSponsorLogos.forEach(m => { if (mainMap && !mainMap.hasLayer(m)) m.addTo(mainMap); });
+}
+
 function renderDetailPanel(cl) {
   const panel = document.getElementById('detailPanel');
+  // Shift legend left of the detail panel
+  document.querySelectorAll('.map-legend').forEach(l => l.style.right = '466px');
   const header = document.getElementById('detailHeader');
   const body = document.getElementById('detailBody');
   const isSpon = cl.sponsored === true;
@@ -2328,7 +2451,7 @@ function renderDetailPanel(cl) {
     ${headerImg ? `<div style="height:140px;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px;border-bottom:1px solid var(--border)"><img src="${headerImg}" alt="${cl.title}" style="max-height:100px;max-width:80%;object-fit:contain" onerror="this.style.display='none'"></div>` : '<div style="height:140px;background:linear-gradient(135deg,var(--navy),#1E3A5F)"></div>'}
     <button class="detail-close" onclick="closeDetail()">✕</button>`;
 
-  let html = `<div class="detail-title">${cl.title}${cl.is_charterer?' <span style="display:inline-flex;align-items:center;gap:4px;font-size:.62rem;padding:3px 9px;background:linear-gradient(135deg,#F59E0B,#FB923C);color:#fff;border-radius:10px;font-weight:800;letter-spacing:.3px;vertical-align:3px;box-shadow:0 1px 3px rgba(245,158,11,.3)">🤝 TOUR-OPÉRATEUR</span>':''}</div>`;
+  let html = `<div class="detail-title">${cl.title}${cl.is_charterer&&cl.has_own_ships?' <span style="display:inline-flex;align-items:center;gap:4px;font-size:.62rem;padding:3px 9px;background:linear-gradient(135deg,#0EA5A2,#F59E0B);color:#fff;border-radius:10px;font-weight:800;letter-spacing:.3px;vertical-align:3px;box-shadow:0 1px 3px rgba(14,165,162,.3)">🚢 ARMATEUR + 🤝 AFFRÉTEUR</span>':cl.is_charterer?' <span style="display:inline-flex;align-items:center;gap:4px;font-size:.62rem;padding:3px 9px;background:linear-gradient(135deg,#F59E0B,#FB923C);color:#fff;border-radius:10px;font-weight:800;letter-spacing:.3px;vertical-align:3px;box-shadow:0 1px 3px rgba(245,158,11,.3)">🤝 AFFRÉTEUR</span>':''}</div>`;
 
   // Gamme & types — moved to top for immediate visibility
   const gammeColors = {'Économique':'#78909C','Standard':'#22C55E','Premium':'#1B6EC2','Luxe':'#D4A843','Ultra-luxe':'#8B5CF6'};
@@ -2345,6 +2468,9 @@ function renderDetailPanel(cl) {
   });
   if (cl.year_founded) {
     metaHtml += `<span style="font-size:0.72rem;padding:4px 12px;background:rgba(100,116,139,.08);border:1.5px solid rgba(100,116,139,.15);border-radius:12px;color:var(--text-light);font-weight:600"><i data-lucide="calendar" style="width:11px;height:11px"></i> Créée en ${cl.year_founded}</span>`;
+  }
+  if (cl.is_francophone) {
+    metaHtml += `<span style="font-size:0.72rem;padding:4px 12px;background:rgba(27,110,194,.08);border:1.5px solid rgba(27,110,194,.2);border-radius:12px;color:var(--blue);font-weight:700">🇫🇷 Francophone</span>`;
   }
   if (metaHtml) {
     html += `<div style="margin:8px 0 12px;display:flex;flex-wrap:wrap;gap:6px">${metaHtml}</div>`;
@@ -2372,11 +2498,19 @@ function renderDetailPanel(cl) {
 
   // Description
   // Charterer info banner
-  if (cl.is_charterer) {
+  if (cl.is_charterer && cl.has_own_ships) {
+    html += `<div style="margin:12px 0;padding:12px 14px;background:linear-gradient(135deg,rgba(14,165,162,.08),rgba(245,158,11,.05));border:1.5px solid rgba(14,165,162,.25);border-radius:10px;display:flex;gap:12px;align-items:flex-start">
+      <div style="font-size:1.3rem;line-height:1;flex-shrink:0">🚢</div>
+      <div>
+        <div style="font-weight:700;color:#0d6b6a;font-size:.8rem;margin-bottom:3px">Armateur et affréteur</div>
+        <div style="font-size:.74rem;color:#78716c;line-height:1.45">Cette compagnie possède sa propre flotte de navires et affrète également des navires auprès d'armateurs partenaires.</div>
+      </div>
+    </div>`;
+  } else if (cl.is_charterer) {
     html += `<div style="margin:12px 0;padding:12px 14px;background:linear-gradient(135deg,rgba(245,158,11,.08),rgba(251,146,60,.05));border:1.5px solid rgba(245,158,11,.25);border-radius:10px;display:flex;gap:12px;align-items:flex-start">
       <div style="font-size:1.3rem;line-height:1;flex-shrink:0">🤝</div>
       <div>
-        <div style="font-weight:700;color:#92400e;font-size:.8rem;margin-bottom:3px">Tour-opérateur affréteur</div>
+        <div style="font-weight:700;color:#92400e;font-size:.8rem;margin-bottom:3px">Affréteur</div>
         <div style="font-size:.74rem;color:#78716c;line-height:1.45">Cette compagnie ne possède pas de navires en propre. Elle affrète des navires auprès d'armateurs partenaires (l'armateur réel est indiqué sur chaque fiche navire).</div>
       </div>
     </div>`;
@@ -2801,14 +2935,36 @@ function checkFirstVisit(){
 // HELPERS
 // =====================================================================
 function clearHighlights() {
-  document.querySelectorAll('.custom-marker.highlighted').forEach(el => el.classList.remove('highlighted'));
+  markers.forEach(m => {
+    // Restore style
+    if (m._highlighted) {
+      const isRiver = m._destIsRiver;
+      const isSpon = m._isSponsored;
+      const fc = isSpon ? '#D4A843' : (isRiver ? '#0EA5A2' : '#1B6EC2');
+      m.setStyle({ fillColor: fc, color: '#fff', fillOpacity: isSpon ? 0.85 : 0.8, radius: isSpon ? 13 : 10, weight: isSpon ? 3 : 2 });
+      m._highlighted = false;
+    }
+    // Re-show hidden markers
+    if (m._hidden) {
+      const isR = m._destIsRiver;
+      const isS = m._isSponsored;
+      const fc2 = isS ? '#D4A843' : (isR ? '#0EA5A2' : '#1B6EC2');
+      m.setStyle({ fillColor: fc2, color: '#fff', fillOpacity: isS ? 0.85 : 0.8, radius: isS ? 13 : 10, weight: isS ? 3 : 2, opacity: 1 });
+      if (m.getTooltip()) m.openTooltip();
+      m._hidden = false;
+    }
+  });
 }
 
 function closeDetail() {
   const panel = document.getElementById('detailPanel');
   panel.classList.remove('open');
+  // Reset legend position
+  document.querySelectorAll('.map-legend').forEach(l => l.style.right = '16px');
   panel.classList.remove('sponsored-active');
   clearHighlights();
+  clearSponsorLogos();
+  showDefaultSponsorLogos();
   document.querySelectorAll('.cruise-card').forEach(c => c.classList.remove('active'));
   activeCruiseLine = null;
   // Si en mode navires, remontrer tous les navires
@@ -2845,6 +3001,7 @@ if(new URLSearchParams(window.location.search).get('size')==='small'){document.g
 // =====================================================================
 function openModal() {
   document.getElementById('modal').classList.add('open');
+  checkFirstVisit();
   document.body.style.overflow = 'hidden';
   try { window.parent.postMessage({ type: 'cruise-map-open' }, '*'); } catch(e) {}
   var slot = document.getElementById('bannerSlot');
