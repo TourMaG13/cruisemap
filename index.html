@@ -24,6 +24,7 @@
   /* Cruise type colors */
   --ct-maritime: #1B6EC2;
   --ct-fluviale: #0EA5A2;
+  --ct-mixte: #8B5CF6;
   --ct-expedition: #8B5CF6;
   --ct-luxe: #D4A843;
   --ct-voilier: #E8913A;
@@ -158,6 +159,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;height:1
 .cruise-card.active{background:rgba(27,110,194,0.06);border-color:var(--blue);box-shadow:0 2px 10px rgba(27,110,194,0.12)}
 .cruise-card.type-maritime{border-left-color:var(--ct-maritime)}
 .cruise-card.type-fluviale{border-left-color:var(--ct-fluviale)}
+.cruise-card.type-mixte{border-left-color:var(--ct-mixte)}
 .cruise-card.type-expedition{border-left-color:var(--ct-expedition)}
 .cruise-card.type-luxe{border-left-color:var(--ct-luxe)}
 .cruise-card.type-voilier{border-left-color:var(--ct-voilier)}
@@ -711,6 +713,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;height:1
           <option value="">Toutes les croisières</option>
           <option value="Croisière maritime">Croisière maritime</option>
           <option value="Croisière fluviale">Croisière fluviale</option>
+          <option value="Maritime & Fluviale">Maritime & Fluviale</option>
         </select>
       </div>
       <div class="filter-row">
@@ -735,31 +738,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;height:1
       </div>
       <div class="filter-row">
         <label class="filter-label"><i data-lucide="map-pin" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Zone de navigation</label>
-        <div class="filter-chips" id="chipsShipZones">
-          <div class="filter-chip" data-zone="Rhin" onclick="this.classList.toggle('active');applyFilters()">Rhin</div>
-          <div class="filter-chip" data-zone="Danube" onclick="this.classList.toggle('active');applyFilters()">Danube</div>
-          <div class="filter-chip" data-zone="Seine" onclick="this.classList.toggle('active');applyFilters()">Seine</div>
-          <div class="filter-chip" data-zone="Rhône / Saône" onclick="this.classList.toggle('active');applyFilters()">Rhône / Saône</div>
-          <div class="filter-chip" data-zone="Douro" onclick="this.classList.toggle('active');applyFilters()">Douro</div>
-          <div class="filter-chip" data-zone="Loire" onclick="this.classList.toggle('active');applyFilters()">Loire</div>
-          <div class="filter-chip" data-zone="Elbe" onclick="this.classList.toggle('active');applyFilters()">Elbe</div>
-          <div class="filter-chip" data-zone="Garonne / Gironde" onclick="this.classList.toggle('active');applyFilters()">Garonne / Gironde</div>
-          <div class="filter-chip" data-zone="Pô / Venise" onclick="this.classList.toggle('active');applyFilters()">Pô / Venise</div>
-          <div class="filter-chip" data-zone="Moselle" onclick="this.classList.toggle('active');applyFilters()">Moselle</div>
-          <div class="filter-chip" data-zone="Canaux de France" onclick="this.classList.toggle('active');applyFilters()">Canaux de France</div>
-          <div class="filter-chip" data-zone="Mississippi" onclick="this.classList.toggle('active');applyFilters()">Mississippi</div>
-          <div class="filter-chip" data-zone="Mékong" onclick="this.classList.toggle('active');applyFilters()">Mékong</div>
-          <div class="filter-chip" data-zone="Nil" onclick="this.classList.toggle('active');applyFilters()">Nil</div>
-          <div class="filter-chip" data-zone="Amazone" onclick="this.classList.toggle('active');applyFilters()">Amazone</div>
-          <div class="filter-chip" data-zone="Asie" onclick="this.classList.toggle('active');applyFilters()">Asie</div>
-          <div class="filter-chip" data-zone="Méditerranée" onclick="this.classList.toggle('active');applyFilters()">Méditerranée</div>
-          <div class="filter-chip" data-zone="Adriatique" onclick="this.classList.toggle('active');applyFilters()">Adriatique</div>
-          <div class="filter-chip" data-zone="Atlantique" onclick="this.classList.toggle('active');applyFilters()">Atlantique</div>
-          <div class="filter-chip" data-zone="Europe du Nord" onclick="this.classList.toggle('active');applyFilters()">Europe du Nord</div>
-          <div class="filter-chip" data-zone="Pacifique" onclick="this.classList.toggle('active');applyFilters()">Pacifique</div>
-          <div class="filter-chip" data-zone="Arctique" onclick="this.classList.toggle('active');applyFilters()">Arctique</div>
-          <div class="filter-chip" data-zone="Afrique australe" onclick="this.classList.toggle('active');applyFilters()">Afrique australe</div>
-        </div>
+        <div class="filter-chips" id="chipsShipZones"></div>
       </div>
       <div class="filter-row">
         <label class="filter-label"><i data-lucide="users" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Capacité</label>
@@ -1085,10 +1064,10 @@ async function deleteReview(reviewId, cruiseId, shipId) {
 // =====================================================================
 // CONSTANTES & ÉTAT
 // =====================================================================
-const CRUISE_TYPES = ["Croisière maritime", "Croisière fluviale"];
+const CRUISE_TYPES = ["Croisière maritime", "Croisière fluviale", "Maritime & Fluviale"];
 const GAMMES = ["Économique", "Standard", "Premium", "Luxe", "Ultra-luxe"];
 const ZONES_GEO = ["Alaska","Amérique du Sud","Antarctique","Arctique","Asie","Baltique","Caraïbes","Europe du Nord","Fjords","Galápagos","Méditerranée","Moyen-Orient","Océan Indien","Pacifique","Polynésie","Scandinavie","Tour du monde","Transatlantique"];
-const FLEUVES = ["Amazone","Danube","Douro","Loire","Mékong","Mississippi","Nil","Rhin","Rhône","Seine","Volga"];
+const FLEUVES = ["Amazone","Danube","Douro","Elbe","Escaut","Havel","Loire","Marne","Meuse","Mékong","Mississippi","Nil","Oder","Rhin","Rhône","Seine","Volga","Zambèze"];
 
 // Coordonnées par zone pour le positionnement sur la carte
 const ZONE_COORDS = {
@@ -1146,7 +1125,14 @@ const ZONE_COORDS = {
   "loire": [47.22, -1.55],    // on the Loire at Nantes
   "amazone": [-3.5, -62.0],   // Amazon river
   "mississippi": [29.95, -90.07], // at New Orleans
-  "volga": [56.33, 43.99]     // on the Volga at Nizhny Novgorod
+  "volga": [56.33, 43.99],     // on the Volga at Nizhny Novgorod
+  "elbe": [53.55, 9.99],        // on the Elbe at Hamburg
+  "havel": [52.41, 13.05],      // on the Havel near Potsdam/Berlin
+  "oder": [52.34, 14.55],       // on the Oder at Frankfurt (Oder)
+  "meuse": [50.85, 5.69],       // on the Meuse at Maastricht
+  "escaut": [51.22, 4.40],      // on the Scheldt at Antwerp
+  "marne": [48.96, 3.40],       // on the Marne near Château-Thierry
+  "zambèze": [-17.92, 25.85]    // on the Zambezi near Livingstone
 };
 
 // Zones that are rivers/fluvial (for marker differentiation)
@@ -1321,7 +1307,15 @@ async function loadData() {
     if (visibleTypes) {
       allCruiseLines = allCruiseLines.filter(cl => {
         const types = cl.cruise_types || [];
-        return types.length === 0 || types.some(t => visibleTypes.has(t));
+        if (types.length === 0) return true;
+        return types.some(t => {
+          if (visibleTypes.has(t)) return true;
+          // "Maritime & Fluviale" matches if either sub-type is visible
+          if (t === 'Maritime & Fluviale') {
+            return visibleTypes.has('Croisière maritime') || visibleTypes.has('Croisière fluviale');
+          }
+          return false;
+        });
       });
     }
 
@@ -1416,11 +1410,18 @@ function buildFilters() {
   const specs = new Map();
 
   const fleuves = new Set();
+  const FLEUVE_SET = new Set(FLEUVES.map(f => f.toLowerCase()));
 
   allCruiseLines.forEach(cl => {
     (cl.cruise_types || []).forEach(t => types.add(t));
     (cl.zones || []).forEach(z => zones.add(z));
     (cl.fleuves || []).forEach(f => fleuves.add(f));
+    // Also collect river names from individual ship zones
+    (cl.ships || []).forEach(s => {
+      (s.ship_zones || []).forEach(sz => {
+        if (FLEUVE_SET.has(sz.toLowerCase())) fleuves.add(sz);
+      });
+    });
     if (cl.gamme) gammes.add(cl.gamme);
     (cl.specialites || []).forEach(s => specs.set(s.id || s, s.label || s));
   });
@@ -1454,6 +1455,48 @@ function buildFilters() {
     chip.onclick = () => { chip.classList.toggle('active'); applyFilters(); };
     chipsContainer.appendChild(chip);
   });
+
+  // Ship zone chips — grouped by region, built dynamically from actual ship data
+  const shipZonesContainer = document.getElementById('chipsShipZones');
+  if (shipZonesContainer) {
+    const allShipZones = new Set();
+    allCruiseLines.forEach(cl => (cl.ships||[]).forEach(s => {
+      (s.ship_zones||[]).forEach(z => allShipZones.add(z));
+    }));
+    const SHIP_ZONE_GROUPS = [
+      {label:"Europe de l'Ouest",zones:['Rhin','Seine','Rhône / Saône','Douro','Loire','Moselle','Main','Garonne / Gironde','Pô / Venise','Canaux de France','Marne','Meuse','Escaut']},
+      {label:"Europe centrale & du Nord",zones:['Danube','Elbe','Havel','Oder']},
+      {label:"Europe de l'Est",zones:['Volga']},
+      {label:"Asie",zones:['Mékong']},
+      {label:"Afrique",zones:['Nil','Zambèze']},
+      {label:"Amériques",zones:['Amazone','Mississippi']},
+      {label:"Zones maritimes",zones:['Méditerranée','Adriatique','Atlantique','Europe du Nord','Scandinavie','Baltique','Caraïbes','Alaska','Antarctique','Arctique','Asie','Pacifique','Afrique australe']}
+    ];
+    shipZonesContainer.style.display='block';
+    SHIP_ZONE_GROUPS.forEach(g => {
+      // Only show groups that have at least one zone present in actual data
+      const present = g.zones.filter(z => allShipZones.has(z));
+      if (present.length === 0) return;
+      const groupDiv = document.createElement('div');
+      groupDiv.style.cssText = 'margin-bottom:10px;width:100%';
+      const label = document.createElement('div');
+      label.style.cssText = 'font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-lighter);margin-bottom:4px';
+      label.textContent = g.label;
+      groupDiv.appendChild(label);
+      const chipsWrap = document.createElement('div');
+      chipsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
+      present.forEach(z => {
+        const chip = document.createElement('div');
+        chip.className = 'filter-chip';
+        chip.dataset.zone = z;
+        chip.textContent = z;
+        chip.onclick = () => { chip.classList.toggle('active'); applyFilters(); };
+        chipsWrap.appendChild(chip);
+      });
+      groupDiv.appendChild(chipsWrap);
+      shipZonesContainer.appendChild(groupDiv);
+    });
+  }
 
   // Amenity chips — normalized grouping
   const AMENITY_GROUPS = [
@@ -1561,8 +1604,21 @@ function applyFilters() {
       const shipHay = (cl.ships||[]).map(s => (s.name||'').toLowerCase()).join(' ');
       if (!hay.includes(search) && !shipHay.includes(search)) return false;
     }
-    if (type && !(cl.cruise_types||[]).includes(type)) return false;
-    if (zone && !(cl.zones||[]).includes(zone) && !(cl.fleuves||[]).includes(zone)) return false;
+    if (type) {
+      const clTypes = cl.cruise_types || [];
+      if (type === 'Croisière maritime') {
+        if (!clTypes.includes('Croisière maritime') && !clTypes.includes('Maritime & Fluviale')) return false;
+      } else if (type === 'Croisière fluviale') {
+        if (!clTypes.includes('Croisière fluviale') && !clTypes.includes('Maritime & Fluviale')) return false;
+      } else {
+        if (!clTypes.includes(type)) return false;
+      }
+    }
+    if (zone && !(cl.zones||[]).includes(zone) && !(cl.fleuves||[]).includes(zone)) {
+      // Also check if any ship has this zone in its ship_zones
+      const shipMatch = (cl.ships||[]).some(s => (s.ship_zones||[]).includes(zone));
+      if (!shipMatch) return false;
+    }
     if (gamme && cl.gamme !== gamme) return false;
     if (activeSpecs.length > 0) {
       const clSpecs = (cl.specialites||[]).map(s => s.id || s);
@@ -1922,7 +1978,8 @@ function renderList() {
     uniqueShips.forEach(({ ship, cl, companies }) => {
       const types = cl.cruise_types || [];
       let typeClass = '';
-      if (types.includes('Croisière fluviale')) typeClass = 'type-fluviale';
+      if (types.includes('Maritime & Fluviale')) typeClass = 'type-mixte';
+      else if (types.includes('Croisière fluviale')) typeClass = 'type-fluviale';
       else if (types.includes('Croisière maritime')) typeClass = 'type-maritime';
 
       let tagsHtml = '';
@@ -1978,7 +2035,8 @@ function renderList() {
     // Determine type class for left border color
     const types = cl.cruise_types || [];
     let typeClass = '';
-    if (types.includes('Croisière fluviale')) typeClass = 'type-fluviale';
+    if (types.includes('Maritime & Fluviale')) typeClass = 'type-mixte';
+    else if (types.includes('Croisière fluviale')) typeClass = 'type-fluviale';
     else if (types.includes('Croisière maritime')) typeClass = 'type-maritime';
 
     // Gamme badge class
@@ -2455,7 +2513,7 @@ function renderDetailPanel(cl) {
 
   // Gamme & types — moved to top for immediate visibility
   const gammeColors = {'Économique':'#78909C','Standard':'#22C55E','Premium':'#1B6EC2','Luxe':'#D4A843','Ultra-luxe':'#8B5CF6'};
-  const typeColors = {'Croisière maritime':'var(--ct-maritime)','Croisière fluviale':'var(--ct-fluviale)'};
+  const typeColors = {'Croisière maritime':'var(--ct-maritime)','Croisière fluviale':'var(--ct-fluviale)','Maritime & Fluviale':'var(--ct-mixte)'};
   let metaHtml = '';
   if (cl.gamme) {
     const gc = gammeColors[cl.gamme] || 'var(--text-light)';
