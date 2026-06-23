@@ -717,7 +717,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;height:1
         </select>
       </div>
       <div class="filter-row">
-        <label class="filter-label"><i data-lucide="globe" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Zone géographique</label>
+        <label class="filter-label"><i data-lucide="globe" style="width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:4px"></i> Mers, océans et continents</label>
         <select class="filter-select" id="filterZone" onchange="applyFilters()">
           <option value="">Toutes les zones</option>
         </select>
@@ -1066,8 +1066,8 @@ async function deleteReview(reviewId, cruiseId, shipId) {
 // =====================================================================
 const CRUISE_TYPES = ["Croisière maritime", "Croisière fluviale", "Maritime & Fluviale"];
 const GAMMES = ["Économique", "Standard", "Premium", "Luxe", "Ultra-luxe"];
-const ZONES_GEO = ["Alaska","Amérique du Sud","Antarctique","Arctique","Asie","Baltique","Caraïbes","Europe du Nord","Fjords","Galápagos","Méditerranée","Moyen-Orient","Océan Indien","Pacifique","Polynésie","Scandinavie","Tour du monde","Transatlantique"];
-const FLEUVES = ["Amazone","Danube","Douro","Elbe","Escaut","Havel","Loire","Marne","Meuse","Mékong","Mississippi","Nil","Oder","Rhin","Rhône","Seine","Volga","Zambèze"];
+const ZONES_GEO = ["Adriatique","Alaska","Amérique du Sud","Antarctique","Arctique","Asie","Baltique","Caraïbes","Europe du Nord","Fjords","Galápagos","Méditerranée","Mer Égée","Moyen-Orient","Océan Atlantique","Océan Indien","Pacifique","Polynésie","Scandinavie","Tour du monde","Transatlantique"];
+const FLEUVES = ["Amazone","Canaux de France","Danube","Douro","Elbe","Escaut","Gange","Garonne","Garonne / Gironde","Guadalquivir","Havel","Lagune de Venise","Loire","Main","Marne","Meuse","Mékong","Mississippi","Moselle","Neckar","Nil","Oder","Pô","Pô / Venise","Rhin","Rhône","Seine","Volga","Zambèze"];
 
 // Coordonnées par zone pour le positionnement sur la carte
 const ZONE_COORDS = {
@@ -1132,7 +1132,23 @@ const ZONE_COORDS = {
   "meuse": [50.85, 5.69],       // on the Meuse at Maastricht
   "escaut": [51.22, 4.40],      // on the Scheldt at Antwerp
   "marne": [48.96, 3.40],       // on the Marne near Château-Thierry
-  "zambèze": [-17.92, 25.85]    // on the Zambezi near Livingstone
+  "zambèze": [-17.92, 25.85],    // on the Zambezi near Livingstone
+  // New rivers
+  "moselle": [49.36, 6.16],       // on the Moselle at Metz
+  "main": [50.11, 8.68],          // on the Main at Frankfurt
+  "neckar": [49.41, 8.69],        // on the Neckar at Heidelberg
+  "pô": [44.95, 11.60],           // on the Po in Emilia-Romagna
+  "pô / venise": [45.07, 12.10],  // Po delta / Venice area
+  "lagune de venise": [45.44, 12.33], // Venice lagoon
+  "guadalquivir": [37.39, -5.99], // on the Guadalquivir at Seville
+  "garonne": [44.84, -0.57],      // on the Garonne at Bordeaux
+  "garonne / gironde": [45.04, -0.72], // Garonne-Gironde estuary
+  "gange": [25.28, 83.01],        // on the Ganges at Varanasi
+  "canaux de france": [47.80, 3.57], // Burgundy canals area
+  // New maritime zones
+  "adriatique": [42.50, 16.00],   // central Adriatic Sea
+  "océan atlantique": [45.00, -20.00], // North Atlantic
+  "mer égée": [38.50, 25.50]      // Aegean Sea near Cyclades
 };
 
 // Zones that are rivers/fluvial (for marker differentiation)
@@ -1431,7 +1447,7 @@ function buildFilters() {
   const selZone = document.getElementById('filterZone');
   if ([...zones].length > 0) {
     const grpZones = document.createElement('optgroup');
-    grpZones.label = '🌍 Zones géographiques';
+    grpZones.label = '🌍 Mers, océans et continents';
     [...zones].sort((a,b) => a.localeCompare(b,'fr')).forEach(z => { const o = document.createElement('option'); o.value = z; o.textContent = z; grpZones.appendChild(o); });
     selZone.appendChild(grpZones);
   }
@@ -1464,10 +1480,12 @@ function buildFilters() {
       (s.ship_zones||[]).forEach(z => allShipZones.add(z));
     }));
     const SHIP_ZONE_GROUPS = [
-      {label:"Europe de l'Ouest",zones:['Rhin','Seine','Rhône / Saône','Douro','Loire','Moselle','Main','Garonne / Gironde','Pô / Venise','Canaux de France','Marne','Meuse','Escaut']},
+      {label:"Fleuves de France",zones:['Seine','Rhône / Saône','Loire','Garonne','Garonne / Gironde','Marne','Moselle','Canaux de France']},
+      {label:"Europe de l'Ouest",zones:['Rhin','Main','Neckar','Meuse','Escaut']},
+      {label:"Europe du Sud",zones:['Douro','Guadalquivir','Pô','Pô / Venise','Lagune de Venise']},
       {label:"Europe centrale & du Nord",zones:['Danube','Elbe','Havel','Oder']},
       {label:"Europe de l'Est",zones:['Volga']},
-      {label:"Asie",zones:['Mékong']},
+      {label:"Asie",zones:['Mékong','Gange']},
       {label:"Afrique",zones:['Nil','Zambèze']},
       {label:"Amériques",zones:['Amazone','Mississippi']},
       {label:"Zones maritimes",zones:['Méditerranée','Adriatique','Atlantique','Europe du Nord','Scandinavie','Baltique','Caraïbes','Alaska','Antarctique','Arctique','Asie','Pacifique','Afrique australe']}
