@@ -1066,7 +1066,19 @@ async function deleteReview(reviewId, cruiseId, shipId) {
 // =====================================================================
 const CRUISE_TYPES = ["Croisière maritime", "Croisière fluviale", "Maritime & Fluviale"];
 const GAMMES = ["Économique", "Standard", "Premium", "Luxe", "Ultra-luxe"];
-const ZONES_GEO = ["Adriatique","Alaska","Amérique du Sud","Antarctique","Arctique","Asie","Baltique","Caraïbes","Europe du Nord","Fjords","Galápagos","Méditerranée","Mer Égée","Moyen-Orient","Océan Atlantique","Océan Indien","Pacifique","Polynésie","Scandinavie","Tour du monde","Transatlantique"];
+// Migration map: old Firestore names → new standardized names
+const ZONE_MIGRATION = {
+  "Adriatique":"Mer Adriatique",
+  "Baltique":"Mer Baltique",
+  "Méditerranée":"Mer Méditerranée",
+  "Pacifique":"Océan Pacifique",
+  "Arctique":"Océan Arctique",
+  "Atlantique":"Océan Atlantique"
+};
+function migrateZone(z){return ZONE_MIGRATION[z]||z}
+function migrateZones(arr){return(arr||[]).map(migrateZone)}
+
+const ZONES_GEO = ["Afrique australe","Alaska","Amérique du Sud","Antarctique","Asie","Caraïbes","Europe du Nord","Fjords","Galápagos","Mer Adriatique","Mer Baltique","Mer Égée","Mer Méditerranée","Moyen-Orient","Océan Arctique","Océan Atlantique","Océan Indien","Océan Pacifique","Polynésie","Scandinavie","Tour du monde","Transatlantique"];
 const FLEUVES = ["Amazone","Canaux de France","Danube","Douro","Elbe","Escaut","Gange","Garonne","Garonne / Gironde","Guadalquivir","Havel","Lagune de Venise","Loire","Main","Marne","Meuse","Mékong","Mississippi","Moselle","Neckar","Nil","Oder","Pô","Pô / Venise","Rhin","Rhône","Seine","Volga","Zambèze"];
 
 // Coordonnées par zone pour le positionnement sur la carte
@@ -1147,8 +1159,14 @@ const ZONE_COORDS = {
   "canaux de france": [47.80, 3.57], // Burgundy canals area
   // New maritime zones
   "adriatique": [42.50, 16.00],   // central Adriatic Sea
+  "mer adriatique": [42.50, 16.00],
   "océan atlantique": [45.00, -20.00], // North Atlantic
-  "mer égée": [38.50, 25.50]      // Aegean Sea near Cyclades
+  "mer égée": [38.50, 25.50],      // Aegean Sea near Cyclades
+  "mer baltique": [58.0, 22.0],
+  "mer méditerranée": [38.0, 18.0],
+  "océan pacifique": [-5.0, 170.0],
+  "océan arctique": [75.0, 20.0],
+  "afrique australe": [-25.0, 28.0]  // Southern Africa
 };
 
 // Zones that are rivers/fluvial (for marker differentiation)
@@ -1317,6 +1335,9 @@ async function loadData() {
           cl.zones=cl.zones.filter(z=>!FLEUVE_SET_F.has(z.toLowerCase()));
         }
       }
+      // Migrate zone names (Adriatique→Mer Adriatique, Baltique→Mer Baltique, etc.)
+      if(cl.zones) cl.zones=migrateZones(cl.zones);
+      if(cl.fleuves) cl.fleuves=migrateZones(cl.fleuves);
     });
 
     // Filter by visible cruise types (if settings exist)
@@ -1340,6 +1361,8 @@ async function loadData() {
       try {
         const shipSnap = await db.collection('cruiseLines').doc(cl.id).collection('ships').get();
         cl.ships = shipSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(s => s.status !== 'draft');
+        // Migrate ship zone names
+        cl.ships.forEach(s=>{if(s.ship_zones)s.ship_zones=migrateZones(s.ship_zones)});
       } catch(e) { cl.ships = []; }
     }
 
@@ -1369,6 +1392,15 @@ async function loadData() {
     renderList();
     renderMarkers();
     updateCount();
+
+    // Auto-select a random sponsored cruise line on initial load
+    const sponsors = filteredCruiseLines.filter(cl => cl.sponsored === true);
+    if (sponsors.length > 0) {
+      const randomSponsor = sponsors[Math.floor(Math.random() * sponsors.length)];
+      // Defer to after map is ready (modal open triggers initMainMap)
+      window._pendingSponsorSelect = randomSponsor.id;
+    }
+
     initEmbedMap();
     loadBanner();
     try { await loadReviews(); } catch(e) { console.warn('Reviews not loaded:', e); }
@@ -1488,7 +1520,7 @@ function buildFilters() {
       {label:"Asie",zones:['Mékong','Gange']},
       {label:"Afrique",zones:['Nil','Zambèze']},
       {label:"Amériques",zones:['Amazone','Mississippi']},
-      {label:"Zones maritimes",zones:['Méditerranée','Adriatique','Atlantique','Europe du Nord','Scandinavie','Baltique','Caraïbes','Alaska','Antarctique','Arctique','Asie','Pacifique','Afrique australe']}
+      {label:"Zones maritimes",zones:['Mer Méditerranée','Mer Adriatique','Mer Baltique','Mer Égée','Océan Atlantique','Océan Pacifique','Océan Arctique','Océan Indien','Europe du Nord','Scandinavie','Caraïbes','Alaska','Antarctique','Asie','Polynésie','Afrique australe','Amérique du Sud','Fjords','Galápagos','Moyen-Orient','Tour du monde','Transatlantique']}
     ];
     shipZonesContainer.style.display='block';
     SHIP_ZONE_GROUPS.forEach(g => {
@@ -3083,7 +3115,14 @@ function openModal() {
   var slot = document.getElementById('bannerSlot');
   if (slot && slot.querySelector('#bannerContent').innerHTML.trim()) slot.style.display = 'block';
   if (!mainMap) {
-    setTimeout(() => { initMainMap(); renderMarkers(); }, 100);
+    setTimeout(() => {
+      initMainMap(); renderMarkers();
+      // Auto-select pending sponsor after map is ready
+      if (window._pendingSponsorSelect) {
+        selectCruiseLine(window._pendingSponsorSelect);
+        window._pendingSponsorSelect = null;
+      }
+    }, 100);
   } else {
     setTimeout(() => mainMap.invalidateSize(), 200);
   }
@@ -3143,7 +3182,7 @@ function initEmbedMap() {
      path:[[50.08,14.44],[50.41,14.05],[50.78,13.90],[51.05,13.74],[51.34,12.37],[51.80,12.25],[52.52,13.41],[53.10,11.40],[53.55,9.99]]},
     {color:'#F59E0B', weight:2, delay:12, name:'Mékong',
      path:[[10.78,106.70],[10.95,106.35],[11.05,105.82],[11.20,105.20],[11.55,104.92]]},
-    {color:'#6366F1', weight:2, delay:1, name:'Méditerranée',
+    {color:'#6366F1', weight:2, delay:1, name:'Mer Méditerranée',
      path:[[43.30,5.37],[43.10,6.10],[42.70,6.50],[42.20,8.00],[41.90,8.73],[41.38,9.16],[40.85,14.27],[39.20,14.90],[38.12,13.36],[37.50,15.09]]},
     {color:'#0EA5A2', weight:2, delay:5, name:'Loire',
      path:[[47.22,-1.55],[47.27,-1.10],[47.30,-0.68],[47.38,-0.20],[47.39,0.35],[47.40,0.69]]},
