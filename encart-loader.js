@@ -25,12 +25,12 @@
   var iframeUrl = baseUrl + 'encart.html';
 
   // Default height (will be adjusted by postMessage)
-  var defaultHeight = container.getAttribute('data-height') || '290';
+  var defaultHeight = container.getAttribute('data-height') || '190';
 
   // Create iframe
   var iframe = document.createElement('iframe');
   iframe.src = iframeUrl;
-  iframe.style.cssText = 'width:100%;border:none;overflow:hidden;display:block;max-width:1200px;margin:0 auto;';
+  iframe.style.cssText = 'width:100%;border:none;overflow:hidden;display:block;max-width:700px;margin:0 auto;';
   iframe.style.height = defaultHeight + 'px';
   iframe.setAttribute('scrolling', 'no');
   iframe.setAttribute('frameborder', '0');
