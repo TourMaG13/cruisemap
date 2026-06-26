@@ -25,7 +25,7 @@
   var iframeUrl = baseUrl + 'encart.html';
 
   // Default height (will be adjusted by postMessage)
-  var defaultHeight = container.getAttribute('data-height') || '240';
+  var defaultHeight = container.getAttribute('data-height') || '290';
 
   // Create iframe
   var iframe = document.createElement('iframe');
