@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CruiseMAP — Encart</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { background: transparent; overflow: hidden; }
+
+.bandeau-cruise {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'DM Sans', sans-serif;
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  display: flex;
+  min-height: 270px;
+  height: auto;
+  cursor: pointer;
+  box-shadow:
+    0 2px 8px rgba(10,30,61,0.08),
+    0 12px 48px rgba(10,30,61,0.18);
+}
+
+/* ══════════════ LEFT PANEL ══════════════ */
+.cruise-left {
+  width: 42%;
+  flex-shrink: 0;
+  background: linear-gradient(168deg, #0E3B5E 0%, #0A2744 45%, #071D34 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 32px 40px 28px 38px;
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.cruise-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.cruise-left::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #1A8FA8 0%, #22B8CF 40%, #3DD4E8 70%, transparent 100%);
+}
+
+.water-layer {
+  position: absolute;
+  bottom: 0; left: -20%; width: 140%; height: 60px;
+  pointer-events: none;
+  overflow: hidden;
+}
+.water-layer svg { width: 100%; height: 100%; }
+.water-1 { opacity: 0.04; }
+.water-2 { opacity: 0.025; bottom: 8px; }
+.water-1 .wpath { animation: w1 7s ease-in-out infinite; }
+.water-2 .wpath { animation: w2 9s ease-in-out infinite; }
+@keyframes w1 { 0%,100% { transform: translateX(0); } 50% { transform: translateX(-40px); } }
+@keyframes w2 { 0%,100% { transform: translateX(0); } 50% { transform: translateX(30px); } }
+
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(34,184,207,0.15), rgba(34,184,207,0.03));
+  pointer-events: none;
+}
+.bubble-1 { width: 80px; height: 80px; bottom: -10px; left: 5%; animation: bFloat 12s ease-in-out infinite; }
+.bubble-2 { width: 50px; height: 50px; bottom: 20px; right: 15%; animation: bFloat 10s ease-in-out 3s infinite; }
+.bubble-3 { width: 30px; height: 30px; bottom: 40px; left: 40%; animation: bFloat 8s ease-in-out 5s infinite; }
+@keyframes bFloat {
+  0%,100% { transform: translateY(0) scale(1); opacity: 0.5; }
+  50% { transform: translateY(-20px) scale(1.1); opacity: 0.8; }
+}
+
+.cruise-compass {
+  position: absolute;
+  top: 20px; right: 20px;
+  width: 36px; height: 36px;
+  opacity: 0.06;
+  pointer-events: none;
+  animation: compassSpin 30s linear infinite;
+}
+@keyframes compassSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.cruise-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(34,184,207,0.10);
+  border: 1px solid rgba(34,184,207,0.28);
+  color: #5DD3E2;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding: 5px 14px;
+  border-radius: 50px;
+  margin-bottom: 18px;
+  width: fit-content;
+}
+.cruise-badge .cruise-dot {
+  width: 6px; height: 6px;
+  background: #22B8CF;
+  border-radius: 50%;
+  animation: cPulse 2.2s ease infinite;
+}
+@keyframes cPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.35; transform:scale(1.7); } }
+
+.cruise-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.18;
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+}
+.cruise-title .hl { color: #5DD3E2; }
+
+.cruise-subtitle {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.50);
+  line-height: 1.55;
+  margin-bottom: 26px;
+  font-weight: 400;
+  max-width: 320px;
+}
+
+.cruise-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #1A9DB5 0%, #22B8CF 50%, #2CC5DA 100%);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 12px 28px;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.25s cubic-bezier(.4,0,.2,1), box-shadow 0.25s;
+  box-shadow: 0 4px 24px rgba(34,184,207,0.28);
+  width: fit-content;
+  position: relative;
+  overflow: hidden;
+}
+.cruise-cta::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 60%);
+  animation: ctaShimmer 4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes ctaShimmer { 0%,100% { transform: translateX(-30%) translateY(-30%); } 50% { transform: translateX(30%) translateY(30%); } }
+.cruise-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(34,184,207,0.45); }
+.cruise-cta svg { transition: transform 0.25s; }
+.cruise-cta:hover svg { transform: translate(2px, -2px); }
+
+.cruise-steps { display: flex; gap: 18px; margin-top: 24px; }
+.cruise-step {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.58rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 1px; color: rgba(255,255,255,0.20);
+  transition: color 0.4s; white-space: nowrap;
+}
+.cruise-step .step-pip {
+  width: 14px; height: 3px; border-radius: 2px;
+  background: rgba(255,255,255,0.08);
+  transition: background 0.4s, width 0.4s;
+  position: relative; overflow: hidden;
+}
+.cruise-step .step-pip::after {
+  content: ''; position: absolute; top: 0; left: 0;
+  height: 100%; width: 0%; background: #22B8CF; border-radius: 2px;
+}
+.cruise-step.active { color: rgba(255,255,255,0.75); }
+.cruise-step.active .step-pip { width: 24px; background: rgba(34,184,207,0.12); }
+.cruise-step.active .step-pip::after { animation: pipFill var(--step-dur) linear forwards; }
+.cruise-step.done { color: rgba(255,255,255,0.32); }
+.cruise-step.done .step-pip { background: rgba(34,184,207,0.20); }
+.cruise-step.done .step-pip::after { width: 100%; background: rgba(34,184,207,0.45); }
+@keyframes pipFill { 0% { width:0%; } 100% { width:100%; } }
+
+/* ══════════════ RIGHT PANEL ══════════════ */
+.cruise-right { flex: 1; position: relative; overflow: hidden; background: #0b1b2e; }
+.cruise-right::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 120% 80% at 70% 90%, rgba(34,184,207,0.04), transparent 50%),
+    linear-gradient(90deg, rgba(34,184,207,0.02) 1px, transparent 1px),
+    linear-gradient(rgba(34,184,207,0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 50px 50px, 50px 50px;
+  z-index: 1; pointer-events: none; opacity: 0;
+  animation: gridIn 1.5s ease 0.5s forwards;
+}
+@keyframes gridIn { to { opacity:1; } }
+.cruise-right::after {
+  content: ''; position: absolute; top: -1px; bottom: -1px; left: -22px; width: 55px;
+  background: linear-gradient(168deg, #0E3B5E 0%, #0A2744 45%, #071D34 100%);
+  transform: skewX(-3deg); z-index: 3;
+}
+
+.water-shimmer {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: linear-gradient(170deg, transparent 0%, rgba(34,184,207,0.02) 30%, transparent 50%, rgba(34,184,207,0.015) 70%, transparent 100%);
+  background-size: 100% 300%;
+  animation: shimmer 8s ease-in-out infinite;
+}
+@keyframes shimmer { 0%,100% { background-position: 0% 0%; } 50% { background-position: 0% 100%; } }
+
+.sim-cruise { position: absolute; inset: 0; }
+.sim-cruise img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: top left; opacity: 0;
+}
+
+.sim-cruise img.cr-e1 { animation: crS1 18s ease infinite; }
+.sim-cruise img.cr-e2 { animation: crS2 18s ease infinite; }
+.sim-cruise img.cr-e3 { animation: crS3 18s ease infinite; }
+.sim-cruise img.cr-e4 { animation: crS4 18s ease infinite; }
+
+@keyframes crS1 {
+  0%   { opacity:1; transform:scale(1); }
+  19%  { opacity:1; transform:scale(1.012); }
+  23%  { opacity:0; transform:scale(1.012); }
+  95%  { opacity:0; } 100% { opacity:1; transform:scale(1); }
+}
+@keyframes crS2 {
+  0%   { opacity:0; } 20% { opacity:0; }
+  24%  { opacity:1; transform:scale(1); }
+  44%  { opacity:1; transform:scale(1.012); }
+  48%  { opacity:0; transform:scale(1.012); } 100% { opacity:0; }
+}
+@keyframes crS3 {
+  0%   { opacity:0; } 45% { opacity:0; }
+  49%  { opacity:1; transform:scale(1); }
+  69%  { opacity:1; transform:scale(1.012); }
+  73%  { opacity:0; transform:scale(1.012); } 100% { opacity:0; }
+}
+@keyframes crS4 {
+  0%   { opacity:0; } 70% { opacity:0; }
+  74%  { opacity:1; transform:scale(1); }
+  94%  { opacity:1; transform:scale(1.012); }
+  98%  { opacity:0; transform:scale(1.012); } 100% { opacity:0; }
+}
+
+.cr-cursor {
+  position: absolute; width: 20px; height: 20px; z-index: 20;
+  pointer-events: none; filter: drop-shadow(1px 2px 5px rgba(0,0,0,0.7));
+  opacity: 0; animation: crCur 18s ease-in-out infinite;
+}
+.cr-cursor svg { width:100%; height:100%; }
+
+@keyframes crCur {
+  0%    { left:50%; top:28%; opacity:0; transform:scale(1); }
+  3%    { left:50%; top:28%; opacity:1; }
+  10%   { left:53%; top:65%; opacity:1; }
+  13%   { left:53%; top:65%; transform:scale(0.8); }
+  14.5% { left:53%; top:65%; transform:scale(1); }
+  20%   { opacity:0; }
+  25%   { left:55%; top:22%; opacity:0; transform:scale(1); }
+  28%   { left:55%; top:22%; opacity:1; }
+  34%   { left:30%; top:38%; opacity:1; }
+  38%   { left:12%; top:52%; opacity:1; }
+  40%   { left:12%; top:52%; transform:scale(0.8); }
+  41.5% { left:12%; top:52%; transform:scale(1); }
+  45%   { opacity:0; }
+  50%   { left:68%; top:16%; opacity:0; transform:scale(1); }
+  53%   { left:68%; top:16%; opacity:1; }
+  59%   { left:80%; top:50%; opacity:1; }
+  63%   { left:83%; top:74%; opacity:1; }
+  65%   { left:83%; top:74%; transform:scale(0.8); }
+  66.5% { left:83%; top:74%; transform:scale(1); }
+  70%   { opacity:0; }
+  75%   { left:42%; top:16%; opacity:0; transform:scale(1); }
+  78%   { left:42%; top:16%; opacity:1; }
+  84%   { left:45%; top:42%; opacity:1; }
+  90%   { left:44%; top:62%; opacity:1; }
+  94%   { opacity:0; }
+  100%  { left:50%; top:28%; opacity:0; }
+}
+
+.cr-ring {
+  position: absolute; width: 28px; height: 28px;
+  border: 2px solid rgba(34,184,207,0.65); border-radius: 50%;
+  z-index: 19; pointer-events: none; opacity: 0; transform: scale(0);
+}
+.cr-ring.r1 { animation: crR1 18s ease infinite; }
+.cr-ring.r2 { animation: crR2 18s ease infinite; }
+.cr-ring.r3 { animation: crR3 18s ease infinite; }
+
+@keyframes crR1 {
+  0%  { left:53%; top:65%; opacity:0; transform:scale(0); }
+  12% { opacity:0; transform:scale(0); }
+  13% { opacity:0.8; transform:scale(0.3); }
+  18% { left:53%; top:65%; opacity:0; transform:scale(2.5); } 100% { opacity:0; }
+}
+@keyframes crR2 {
+  0%  { left:12%; top:52%; opacity:0; transform:scale(0); }
+  39% { opacity:0; transform:scale(0); }
+  40% { opacity:0.8; transform:scale(0.3); }
+  45% { left:12%; top:52%; opacity:0; transform:scale(2.5); } 100% { opacity:0; }
+}
+@keyframes crR3 {
+  0%  { left:83%; top:74%; opacity:0; transform:scale(0); }
+  64% { opacity:0; transform:scale(0); }
+  65% { opacity:0.8; transform:scale(0.3); }
+  70% { left:83%; top:74%; opacity:0; transform:scale(2.5); } 100% { opacity:0; }
+}
+
+/* ══════════════ RESPONSIVE ══════════════ */
+@media (max-width: 1000px) {
+  .bandeau-cruise { min-height: 230px; }
+  .cruise-left { padding: 18px 28px; width: 44%; }
+  .cruise-title { font-size: 1.3rem; margin-bottom: 6px; }
+  .cruise-subtitle { font-size: 0.74rem; margin-bottom: 12px; }
+  .cruise-cta { font-size: 0.82rem; padding: 10px 22px; }
+  .cruise-badge { font-size: 0.6rem; padding: 4px 10px; margin-bottom: 10px; }
+  .cruise-steps { gap: 12px; margin-top: 16px; }
+  .cruise-step { font-size: 0.52rem; }
+}
+@media (max-width: 768px) {
+  .bandeau-cruise { min-height: 210px; }
+  .cruise-left { padding: 16px 22px; width: 46%; }
+  .cruise-title { font-size: 1.15rem; margin-bottom: 5px; }
+  .cruise-subtitle { font-size: 0.7rem; margin-bottom: 10px; line-height: 1.4; }
+  .cruise-cta { font-size: 0.75rem; padding: 9px 18px; }
+  .cruise-badge { font-size: 0.55rem; padding: 3px 8px; margin-bottom: 8px; }
+  .cruise-steps { gap: 8px; margin-top: 14px; }
+  .cruise-step { font-size: 0.48rem; letter-spacing: 0.8px; }
+  .cruise-compass { display: none; }
+}
+@media (max-width: 600px) {
+  .bandeau-cruise { flex-direction: column; min-height: auto; border-radius: 16px; }
+  .cruise-left { width: 100%; padding: 26px 22px; border-radius: 0; }
+  .cruise-right { display: none !important; }
+  .cruise-title { font-size: 1.2rem; }
+  .cruise-subtitle { font-size: 0.78rem; max-width: none; }
+  .cruise-steps { margin-top: 18px; gap: 14px; }
+  .water-layer { display: none; }
+  .bubble { display: none; }
+}
+@media (max-width: 420px) {
+  .cruise-left { padding: 22px 18px; }
+  .cruise-title { font-size: 1.05rem; }
+  .cruise-subtitle { font-size: 0.72rem; margin-bottom: 14px; }
+  .cruise-cta { font-size: 0.75rem; padding: 9px 18px; }
+}
+</style>
+</head>
+<body>
+
+<div class="bandeau-cruise" onclick="window.open(this.querySelector('.cruise-cta').href,'_top')">
+  <div class="cruise-left">
+    <svg class="cruise-compass" viewBox="0 0 100 100" fill="none">
+      <path d="M50 0L56 44L100 50L56 56L50 100L44 56L0 50L44 44Z" fill="#fff"/>
+      <circle cx="50" cy="50" r="6" fill="none" stroke="#fff" stroke-width="2"/>
+    </svg>
+    <div class="bubble bubble-1"></div>
+    <div class="bubble bubble-2"></div>
+    <div class="bubble bubble-3"></div>
+
+    <div class="cruise-badge"><span class="cruise-dot"></span> CruiseMAP</div>
+    <h2 class="cruise-title">La carte interactive des<br><span class="hl">Croisières Fluviales</span></h2>
+    <p class="cruise-subtitle">18 compagnies, 350+ navires, 29 fleuves. Comparez les flottes et trouvez la croisière idéale pour vos clients.</p>
+    <a href="https://www.tourmag.com/test-carte-croisiere_a132156.html" class="cruise-cta" target="_top">
+      Explorer la carte
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+    </a>
+
+    <div class="cruise-steps" id="cruiseSteps">
+      <div class="cruise-step" data-step="0"><span class="step-pip"></span>Découvrir</div>
+      <div class="cruise-step" data-step="1"><span class="step-pip"></span>Explorer</div>
+      <div class="cruise-step" data-step="2"><span class="step-pip"></span>Comparer</div>
+      <div class="cruise-step" data-step="3"><span class="step-pip"></span>S'informer</div>
+    </div>
+
+    <div class="water-layer water-1">
+      <svg viewBox="0 0 1400 60" preserveAspectRatio="none"><path class="wpath" d="M0,30 C120,50 280,10 420,30 C560,50 720,10 860,30 C1000,50 1160,10 1300,30 L1400,30 L1400,60 L0,60Z" fill="#22B8CF"/></svg>
+    </div>
+    <div class="water-layer water-2">
+      <svg viewBox="0 0 1400 60" preserveAspectRatio="none"><path class="wpath" d="M0,35 C180,15 360,50 540,35 C720,20 900,50 1080,35 C1200,25 1320,42 1400,35 L1400,60 L0,60Z" fill="#1A9DB5"/></svg>
+    </div>
+  </div>
+
+  <div class="cruise-right">
+    <div class="water-shimmer"></div>
+    <div class="sim-cruise">
+      <img class="cr-e4" src="https://www.tourmag.com/my/test/carte_croisieres/animation/etape4.jpg" alt="">
+      <img class="cr-e3" src="https://www.tourmag.com/my/test/carte_croisieres/animation/etape3.jpg" alt="">
+      <img class="cr-e2" src="https://www.tourmag.com/my/test/carte_croisieres/animation/etape2.jpg" alt="">
+      <img class="cr-e1" src="https://www.tourmag.com/my/test/carte_croisieres/animation/etape1.jpg" alt="">
+    </div>
+    <div class="cr-cursor">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 8-6.5 2L9 19.5 5 3z" fill="#fff" stroke="#1a1a1a" stroke-width="1"/></svg>
+    </div>
+    <div class="cr-ring r1"></div>
+    <div class="cr-ring r2"></div>
+    <div class="cr-ring r3"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Send height to parent for iframe auto-resize
+  function sendHeight() {
+    var h = document.querySelector('.bandeau-cruise').offsetHeight;
+    window.parent.postMessage({ type: 'cruisemap-encart-resize', height: h }, '*');
+  }
+  window.addEventListener('load', function() { setTimeout(sendHeight, 200); });
+  window.addEventListener('resize', sendHeight);
+
+  // Step indicator sync
+  var CYCLE = 18000;
+  var stepsEl = document.querySelectorAll('#cruiseSteps .cruise-step');
+  var ranges = [
+    { s: 0.00, e: 0.22 },
+    { s: 0.23, e: 0.47 },
+    { s: 0.48, e: 0.72 },
+    { s: 0.73, e: 0.97 }
+  ];
+  var started = [false, false, false, false];
+
+  function tick() {
+    var t = (performance.now() % CYCLE) / CYCLE;
+    for (var i = 0; i < 4; i++) {
+      var el = stepsEl[i], r = ranges[i];
+      var isActive = t >= r.s && t < r.e;
+      var isDone = t >= r.e && t < 0.98;
+      if (isActive) {
+        if (!started[i]) {
+          started[i] = true;
+          el.classList.remove('done');
+          el.classList.add('active');
+          var dur = (r.e - r.s) * CYCLE;
+          el.style.setProperty('--step-dur', dur + 'ms');
+          var pip = el.querySelector('.step-pip');
+          pip.style.animation = 'none';
+          void pip.offsetWidth;
+          pip.style.animation = '';
+        }
+      } else {
+        started[i] = false;
+        el.classList.remove('active');
+        if (isDone) { el.classList.add('done'); }
+        else { el.classList.remove('done'); }
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+</script>
+</body>
+</html>
