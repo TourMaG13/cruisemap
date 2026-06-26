@@ -12,16 +12,19 @@ html, body { background: transparent; overflow: hidden; }
 
 .bandeau-cruise {
   width: 100%;
-  max-width: 1200px;
+  max-width: 700px;
   margin: 0 auto;
   font-family: 'DM Sans', sans-serif;
   position: relative;
   overflow: hidden;
   border-radius: 18px;
   display: flex;
-  min-height: 270px;
+  min-height: 180px;
   height: auto;
   cursor: pointer;
+  box-shadow:
+    0 2px 8px rgba(10,30,61,0.08),
+    0 12px 48px rgba(10,30,61,0.18);
 }
 
 /* ══════════════ LEFT PANEL ══════════════ */
@@ -32,7 +35,7 @@ html, body { background: transparent; overflow: hidden; }
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 32px 40px 28px 38px;
+  padding: 22px 32px 20px 30px;
   position: relative;
   z-index: 2;
   overflow: hidden;
@@ -105,7 +108,7 @@ html, body { background: transparent; overflow: hidden; }
   letter-spacing: 2px;
   padding: 5px 14px;
   border-radius: 50px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
   width: fit-content;
 }
 .cruise-badge .cruise-dot {
@@ -117,11 +120,11 @@ html, body { background: transparent; overflow: hidden; }
 @keyframes cPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.35; transform:scale(1.7); } }
 
 .cruise-title {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 800;
   color: #fff;
   line-height: 1.18;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   letter-spacing: -0.01em;
 }
 .cruise-title .hl { color: #5DD3E2; }
@@ -130,7 +133,7 @@ html, body { background: transparent; overflow: hidden; }
   font-size: 0.82rem;
   color: rgba(255,255,255,0.50);
   line-height: 1.55;
-  margin-bottom: 26px;
+  margin-bottom: 16px;
   font-weight: 400;
   max-width: 320px;
 }
@@ -169,31 +172,6 @@ html, body { background: transparent; overflow: hidden; }
 .cruise-cta svg { transition: transform 0.25s; }
 .cruise-cta:hover svg { transform: translate(2px, -2px); }
 
-.cruise-steps { display: flex; gap: 18px; margin-top: 24px; }
-.cruise-step {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 0.58rem; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 1px; color: rgba(255,255,255,0.20);
-  transition: color 0.4s; white-space: nowrap;
-}
-.cruise-step .step-pip {
-  width: 14px; height: 3px; border-radius: 2px;
-  background: rgba(255,255,255,0.08);
-  transition: background 0.4s, width 0.4s;
-  position: relative; overflow: hidden;
-}
-.cruise-step .step-pip::after {
-  content: ''; position: absolute; top: 0; left: 0;
-  height: 100%; width: 0%; background: #22B8CF; border-radius: 2px;
-}
-.cruise-step.active { color: rgba(255,255,255,0.75); }
-.cruise-step.active .step-pip { width: 24px; background: rgba(34,184,207,0.12); }
-.cruise-step.active .step-pip::after { animation: pipFill var(--step-dur) linear forwards; }
-.cruise-step.done { color: rgba(255,255,255,0.32); }
-.cruise-step.done .step-pip { background: rgba(34,184,207,0.20); }
-.cruise-step.done .step-pip::after { width: 100%; background: rgba(34,184,207,0.45); }
-@keyframes pipFill { 0% { width:0%; } 100% { width:100%; } }
-
 /* ══════════════ RIGHT PANEL ══════════════ */
 .cruise-right { flex: 1; position: relative; overflow: hidden; background: #0b1b2e; }
 .cruise-right::before {
@@ -224,8 +202,13 @@ html, body { background: transparent; overflow: hidden; }
 .sim-cruise { position: absolute; inset: 0; }
 .sim-cruise img {
   position: absolute; inset: 0; width: 100%; height: 100%;
-  object-fit: cover; object-position: top left; opacity: 0;
+  object-fit: cover; object-position: center; opacity: 0;
 }
+/* Recadrage par étape pour montrer la zone utile */
+.sim-cruise img.cr-e1 { object-position: center center; }
+.sim-cruise img.cr-e2 { object-position: 25% center; }
+.sim-cruise img.cr-e3 { object-position: 70% center; }
+.sim-cruise img.cr-e4 { object-position: center center; }
 
 .sim-cruise img.cr-e1 { animation: crS1 18s ease infinite; }
 .sim-cruise img.cr-e2 { animation: crS2 18s ease infinite; }
@@ -323,33 +306,28 @@ html, body { background: transparent; overflow: hidden; }
 
 /* ══════════════ RESPONSIVE ══════════════ */
 @media (max-width: 1000px) {
-  .bandeau-cruise { min-height: 230px; }
-  .cruise-left { padding: 18px 28px; width: 44%; }
-  .cruise-title { font-size: 1.3rem; margin-bottom: 6px; }
-  .cruise-subtitle { font-size: 0.74rem; margin-bottom: 12px; }
-  .cruise-cta { font-size: 0.82rem; padding: 10px 22px; }
-  .cruise-badge { font-size: 0.6rem; padding: 4px 10px; margin-bottom: 10px; }
-  .cruise-steps { gap: 12px; margin-top: 16px; }
-  .cruise-step { font-size: 0.52rem; }
+  .bandeau-cruise { min-height: 180px; }
+  .cruise-left { padding: 16px 24px; width: 32%; }
+  .cruise-title { font-size: 1.1rem; margin-bottom: 5px; }
+  .cruise-subtitle { font-size: 0.7rem; margin-bottom: 10px; }
+  .cruise-cta { font-size: 0.78rem; padding: 9px 18px; }
+  .cruise-badge { font-size: 0.55rem; padding: 3px 8px; margin-bottom: 8px; }
 }
 @media (max-width: 768px) {
-  .bandeau-cruise { min-height: 210px; }
-  .cruise-left { padding: 16px 22px; width: 46%; }
-  .cruise-title { font-size: 1.15rem; margin-bottom: 5px; }
-  .cruise-subtitle { font-size: 0.7rem; margin-bottom: 10px; line-height: 1.4; }
-  .cruise-cta { font-size: 0.75rem; padding: 9px 18px; }
-  .cruise-badge { font-size: 0.55rem; padding: 3px 8px; margin-bottom: 8px; }
-  .cruise-steps { gap: 8px; margin-top: 14px; }
-  .cruise-step { font-size: 0.48rem; letter-spacing: 0.8px; }
+  .bandeau-cruise { min-height: 160px; }
+  .cruise-left { padding: 14px 16px; width: 30%; }
+  .cruise-title { font-size: 0.95rem; margin-bottom: 4px; }
+  .cruise-subtitle { font-size: 0.62rem; margin-bottom: 8px; line-height: 1.4; }
+  .cruise-cta { font-size: 0.68rem; padding: 8px 14px; }
+  .cruise-badge { font-size: 0.5rem; padding: 3px 7px; margin-bottom: 6px; letter-spacing: 1.2px; }
   .cruise-compass { display: none; }
 }
 @media (max-width: 600px) {
   .bandeau-cruise { flex-direction: column; min-height: auto; border-radius: 16px; }
-  .cruise-left { width: 100%; padding: 26px 22px; border-radius: 0; }
+  .cruise-left { width: 100%; padding: 22px 20px; border-radius: 0; }
   .cruise-right { display: none !important; }
-  .cruise-title { font-size: 1.2rem; }
-  .cruise-subtitle { font-size: 0.78rem; max-width: none; }
-  .cruise-steps { margin-top: 18px; gap: 14px; }
+  .cruise-title { font-size: 1.05rem; }
+  .cruise-subtitle { font-size: 0.72rem; max-width: none; }
   .water-layer { display: none; }
   .bubble { display: none; }
 }
@@ -373,20 +351,13 @@ html, body { background: transparent; overflow: hidden; }
     <div class="bubble bubble-2"></div>
     <div class="bubble bubble-3"></div>
 
-    <div class="cruise-badge"><span class="cruise-dot"></span> CruiseMAP</div>
-    <h2 class="cruise-title">La carte interactive des<br><span class="hl">Croisières Fluviales</span></h2>
-    <p class="cruise-subtitle">18 compagnies, 350+ navires, 29 fleuves. Comparez les flottes et trouvez la croisière idéale pour vos clients.</p>
+    <div class="cruise-badge"><span class="cruise-dot"></span> Nouveau</div>
+    <h2 class="cruise-title">Carte des<br><span class="hl">croisières fluviales</span></h2>
+    <p class="cruise-subtitle">18 compagnies, 350+ navires, 29 fleuves. Comparez les flottes en un clic.</p>
     <a href="https://www.tourmag.com/test-carte-croisiere_a132156.html" class="cruise-cta" target="_top">
       Explorer la carte
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
     </a>
-
-    <div class="cruise-steps" id="cruiseSteps">
-      <div class="cruise-step" data-step="0"><span class="step-pip"></span>Découvrir</div>
-      <div class="cruise-step" data-step="1"><span class="step-pip"></span>Explorer</div>
-      <div class="cruise-step" data-step="2"><span class="step-pip"></span>Comparer</div>
-      <div class="cruise-step" data-step="3"><span class="step-pip"></span>S'informer</div>
-    </div>
 
     <div class="water-layer water-1">
       <svg viewBox="0 0 1400 60" preserveAspectRatio="none"><path class="wpath" d="M0,30 C120,50 280,10 420,30 C560,50 720,10 860,30 C1000,50 1160,10 1300,30 L1400,30 L1400,60 L0,60Z" fill="#22B8CF"/></svg>
@@ -415,53 +386,12 @@ html, body { background: transparent; overflow: hidden; }
 
 <script>
 (function() {
-  // Send height to parent for iframe auto-resize
   function sendHeight() {
     var h = document.querySelector('.bandeau-cruise').offsetHeight;
     window.parent.postMessage({ type: 'cruisemap-encart-resize', height: h }, '*');
   }
   window.addEventListener('load', function() { setTimeout(sendHeight, 200); });
   window.addEventListener('resize', sendHeight);
-
-  // Step indicator sync
-  var CYCLE = 18000;
-  var stepsEl = document.querySelectorAll('#cruiseSteps .cruise-step');
-  var ranges = [
-    { s: 0.00, e: 0.22 },
-    { s: 0.23, e: 0.47 },
-    { s: 0.48, e: 0.72 },
-    { s: 0.73, e: 0.97 }
-  ];
-  var started = [false, false, false, false];
-
-  function tick() {
-    var t = (performance.now() % CYCLE) / CYCLE;
-    for (var i = 0; i < 4; i++) {
-      var el = stepsEl[i], r = ranges[i];
-      var isActive = t >= r.s && t < r.e;
-      var isDone = t >= r.e && t < 0.98;
-      if (isActive) {
-        if (!started[i]) {
-          started[i] = true;
-          el.classList.remove('done');
-          el.classList.add('active');
-          var dur = (r.e - r.s) * CYCLE;
-          el.style.setProperty('--step-dur', dur + 'ms');
-          var pip = el.querySelector('.step-pip');
-          pip.style.animation = 'none';
-          void pip.offsetWidth;
-          pip.style.animation = '';
-        }
-      } else {
-        started[i] = false;
-        el.classList.remove('active');
-        if (isDone) { el.classList.add('done'); }
-        else { el.classList.remove('done'); }
-      }
-    }
-    requestAnimationFrame(tick);
-  }
-  tick();
 })();
 </script>
 </body>
