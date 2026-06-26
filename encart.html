@@ -19,7 +19,7 @@ html, body { background: transparent; overflow: hidden; }
   overflow: hidden;
   border-radius: 18px;
   display: flex;
-  min-height: 180px;
+  min-height: 220px;
   height: auto;
   cursor: pointer;
   box-shadow:
@@ -306,7 +306,7 @@ html, body { background: transparent; overflow: hidden; }
 
 /* ══════════════ RESPONSIVE ══════════════ */
 @media (max-width: 1000px) {
-  .bandeau-cruise { min-height: 180px; }
+  .bandeau-cruise { min-height: 220px; }
   .cruise-left { padding: 16px 24px; width: 32%; }
   .cruise-title { font-size: 1.1rem; margin-bottom: 5px; }
   .cruise-subtitle { font-size: 0.7rem; margin-bottom: 10px; }
@@ -314,7 +314,7 @@ html, body { background: transparent; overflow: hidden; }
   .cruise-badge { font-size: 0.55rem; padding: 3px 8px; margin-bottom: 8px; }
 }
 @media (max-width: 768px) {
-  .bandeau-cruise { min-height: 160px; }
+  .bandeau-cruise { min-height: 220px; }
   .cruise-left { padding: 14px 16px; width: 30%; }
   .cruise-title { font-size: 0.95rem; margin-bottom: 4px; }
   .cruise-subtitle { font-size: 0.62rem; margin-bottom: 8px; line-height: 1.4; }
@@ -387,11 +387,15 @@ html, body { background: transparent; overflow: hidden; }
 <script>
 (function() {
   function sendHeight() {
-    var h = document.querySelector('.bandeau-cruise').offsetHeight;
-    window.parent.postMessage({ type: 'cruisemap-encart-resize', height: h }, '*');
+    var el = document.querySelector('.bandeau-cruise');
+    if (el) {
+      var h = el.offsetHeight;
+      if (h > 0) window.parent.postMessage({ type: 'cruisemap-encart-resize', height: h }, '*');
+    }
   }
-  window.addEventListener('load', function() { setTimeout(sendHeight, 200); });
+  window.addEventListener('load', function() { setTimeout(sendHeight, 300); });
   window.addEventListener('resize', sendHeight);
+  setInterval(sendHeight, 2000);
 })();
 </script>
 </body>
