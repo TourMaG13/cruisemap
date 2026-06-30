@@ -3,9 +3,9 @@
  * Heberger sur : tourmag13.github.io/cruisemap/encart-loader.js
  */
 (function() {
-  var container = document.getElementById('cruisemap-encart');
+  var container = document.getElementById('cruisemap-encart-large');
   if (!container) {
-    console.warn('[CruiseMAP Encart] Element #cruisemap-encart introuvable.');
+    console.warn('[CruiseMAP Encart] Element #cruisemap-encart-large introuvable.');
     return;
   }
 
@@ -13,8 +13,8 @@
   var scripts = document.getElementsByTagName('script');
   var baseUrl = '';
   for (var i = 0; i < scripts.length; i++) {
-    if (scripts[i].src && scripts[i].src.indexOf('encart-loader') !== -1) {
-      baseUrl = scripts[i].src.replace(/encart-loader\.js.*$/, '');
+    if (scripts[i].src && scripts[i].src.indexOf('encart-loader-large') !== -1) {
+      baseUrl = scripts[i].src.replace(/encart-loader-large\.js.*$/, '');
       break;
     }
   }
@@ -22,7 +22,7 @@
     baseUrl = 'https://tourmag13.github.io/cruisemap/';
   }
 
-  var iframeUrl = baseUrl + 'encart.html';
+  var iframeUrl = baseUrl + 'encart-large.html';
 
   // Default height (will be adjusted by postMessage)
   var defaultHeight = container.getAttribute('data-height') || '290';
