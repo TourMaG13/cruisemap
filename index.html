@@ -32,7 +32,7 @@
   /* Gamme colors */
   --gm-economique: #78909C;
   --gm-standard: #22C55E;
-  --gm-premium: #1B6EC2;
+  --gm-premium: #C5960C;
   --gm-luxe: #D4A843;
   --gm-ultra: #8B5CF6;
   --bg: #F5F7FA;
@@ -177,12 +177,42 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;height:1
 .cruise-card-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
 .cruise-card-tag{font-size:0.62rem;padding:2px 8px;border-radius:10px;white-space:nowrap;font-weight:600}
 .cruise-card-tag.tag-gamme-standard{background:#E8F5E9;color:#2E7D32}
-.cruise-card-tag.tag-gamme-premium{background:#E3F2FD;color:#1565C0}
-.cruise-card-tag.tag-gamme-luxe{background:#FFF8E1;color:#F57F17}
+.cruise-card-tag.tag-gamme-premium{background:#FEF3C7;color:#92400E;border:1px solid #F59E0B}
+.cruise-card-tag.tag-gamme-luxe{background:#0B1D33;color:#D4A843;border:1px solid #1E3A5F}
 .cruise-card-tag.tag-gamme-ultra{background:#F3E5F5;color:#7B1FA2}
 .cruise-card-tag.tag-gamme-eco{background:#ECEFF1;color:#546E7A}
 .cruise-card-tag.tag-type{background:var(--bg);border:1px solid var(--border);color:var(--text-light)}
 .cruise-card-tag.tag-ships{background:var(--bg);border:1px solid var(--border);color:var(--text-light)}
+
+/* Badge francophone — list (simple) */
+.badge-francophone{display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 3px;background:#fff;border:1.5px solid #9CA3AF;border-radius:14px;font-size:.68rem;font-weight:700;color:#4B5563;white-space:nowrap;line-height:1;box-shadow:0 1px 2px rgba(0,0,0,.06);margin-top:3px}
+.badge-francophone .flag{display:flex;width:18px;height:13px;border-radius:2px;overflow:hidden;flex-shrink:0;box-shadow:0 0 0 .5px rgba(0,0,0,.1)}
+.badge-francophone .flag span{flex:1}
+.badge-francophone .flag .fb{background:#002395}
+.badge-francophone .flag .fw{background:#fff}
+.badge-francophone .flag .fr{background:#ED2939}
+/* Badge 100% francophone — list (bold) */
+.badge-francophone-full{display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 3px;background:#fff;border:1.5px solid #1B6EC2;border-radius:14px;font-size:.68rem;font-weight:800;color:#1B3A6B;white-space:nowrap;line-height:1;box-shadow:0 1px 3px rgba(27,110,194,.12);margin-top:3px}
+.badge-francophone-full .flag{display:flex;width:20px;height:14px;border-radius:3px;overflow:hidden;flex-shrink:0;box-shadow:0 0 0 .5px rgba(0,0,0,.1)}
+.badge-francophone-full .flag span{flex:1}
+.badge-francophone-full .flag .fb{background:#002395}
+.badge-francophone-full .flag .fw{background:#fff}
+.badge-francophone-full .flag .fr{background:#ED2939}
+
+/* Badge francophone — detail (simple) */
+.badge-francophone-lg{display:inline-flex;align-items:center;gap:7px;padding:6px 14px 6px 6px;background:#fff;border:1.5px solid #9CA3AF;border-radius:18px;font-size:.78rem;font-weight:700;color:#4B5563;white-space:nowrap;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.badge-francophone-lg .flag{display:flex;width:24px;height:17px;border-radius:3px;overflow:hidden;flex-shrink:0;box-shadow:0 0 0 .5px rgba(0,0,0,.12)}
+.badge-francophone-lg .flag span{flex:1}
+.badge-francophone-lg .flag .fb{background:#002395}
+.badge-francophone-lg .flag .fw{background:#fff}
+.badge-francophone-lg .flag .fr{background:#ED2939}
+/* Badge 100% francophone — detail (bold) */
+.badge-francophone-full-lg{display:inline-flex;align-items:center;gap:8px;padding:7px 16px 7px 7px;background:linear-gradient(135deg,#EFF6FF,#FFF7ED);border:2px solid #1B6EC2;border-radius:20px;font-size:.82rem;font-weight:800;color:#1B3A6B;white-space:nowrap;line-height:1;box-shadow:0 2px 8px rgba(27,110,194,.15)}
+.badge-francophone-full-lg .flag{display:flex;width:28px;height:20px;border-radius:4px;overflow:hidden;flex-shrink:0;box-shadow:0 0 0 .5px rgba(0,0,0,.15)}
+.badge-francophone-full-lg .flag span{flex:1}
+.badge-francophone-full-lg .flag .fb{background:#002395}
+.badge-francophone-full-lg .flag .fw{background:#fff}
+.badge-francophone-full-lg .flag .fr{background:#ED2939}
 .cruise-card.sponsored{background:linear-gradient(135deg,rgba(212,168,67,0.06),rgba(232,145,58,0.04));border:2px solid var(--gold);border-left:3px solid var(--gold);position:relative}
 .cruise-card.sponsored .cruise-card-name{color:#9A7520}
 
@@ -1493,6 +1523,7 @@ function buildFilters() {
       });
     });
     if (cl.gamme) gammes.add(cl.gamme);
+    getGammes(cl).forEach(g => gammes.add(g));
     (cl.specialites || []).forEach(s => specs.set(s.id || s, s.label || s));
   });
 
@@ -1691,7 +1722,7 @@ function applyFilters() {
       const shipMatch = (cl.ships||[]).some(s => (s.ship_zones||[]).includes(zone));
       if (!shipMatch) return false;
     }
-    if (gamme && cl.gamme !== gamme) return false;
+    if (gamme && !getGammes(cl).includes(gamme)) return false;
     if (activeSpecs.length > 0) {
       const clSpecs = (cl.specialites||[]).map(s => s.id || s);
       if (!activeSpecs.every(id => clSpecs.includes(id))) return false;
@@ -1997,6 +2028,41 @@ document.addEventListener('click', e => {
 });
 
 // =====================================================================
+// HELPERS: francophone level + gammes array (backward compat)
+// =====================================================================
+const FLAG_HTML = '<span class="flag"><span class="fb"></span><span class="fw"></span><span class="fr"></span></span>';
+
+function getFrancoLevel(cl) {
+  // New field: francophone_level = '' | 'francophone' | '100_francophone'
+  if (cl.francophone_level) return cl.francophone_level;
+  // Backward compat: old boolean is_francophone → '100_francophone'
+  if (cl.is_francophone) return '100_francophone';
+  return '';
+}
+
+function francoHtmlSmall(cl) {
+  const lvl = getFrancoLevel(cl);
+  if (lvl === '100_francophone') return `<div class="badge-francophone-full">${FLAG_HTML}100% francophone</div>`;
+  if (lvl === 'francophone') return `<div class="badge-francophone">${FLAG_HTML}Francophone</div>`;
+  return '';
+}
+
+function francoHtmlLg(cl) {
+  const lvl = getFrancoLevel(cl);
+  if (lvl === '100_francophone') return `<span class="badge-francophone-full-lg">${FLAG_HTML}100% francophone</span>`;
+  if (lvl === 'francophone') return `<span class="badge-francophone-lg">${FLAG_HTML}Francophone</span>`;
+  return '';
+}
+
+function getGammes(cl) {
+  // New field: gammes = ['Premium', 'Luxe']
+  if (Array.isArray(cl.gammes) && cl.gammes.length > 0) return cl.gammes;
+  // Backward compat: old string gamme
+  if (cl.gamme) return [cl.gamme];
+  return [];
+}
+
+// =====================================================================
 // LISTE SIDEBAR
 // =====================================================================
 function renderList() {
@@ -2057,10 +2123,10 @@ function renderList() {
       let tagsHtml = '';
       if (ship.capacity) tagsHtml += `<span class="cruise-card-tag tag-type">👥 ${ship.capacity} pax</span>`;
       if (ship.year) tagsHtml += `<span class="cruise-card-tag tag-type">📅 ${ship.year}</span>`;
-      if (cl.gamme) {
-        const gammeClassMap = {'Économique':'tag-gamme-eco','Standard':'tag-gamme-standard','Premium':'tag-gamme-premium','Luxe':'tag-gamme-luxe','Ultra-luxe':'tag-gamme-ultra'};
-        tagsHtml += `<span class="cruise-card-tag ${gammeClassMap[cl.gamme] || 'tag-type'}">${cl.gamme}</span>`;
-      }
+      const gammeClassMap = {'Économique':'tag-gamme-eco','Standard':'tag-gamme-standard','Premium':'tag-gamme-premium','Luxe':'tag-gamme-luxe','Ultra-luxe':'tag-gamme-ultra'};
+      getGammes(cl).forEach(g => {
+        tagsHtml += `<span class="cruise-card-tag ${gammeClassMap[g] || 'tag-type'}">${g}</span>`;
+      });
 
       const companiesText = companies.length > 1
         ? companies.join(', ')
@@ -2070,6 +2136,7 @@ function renderList() {
         ${ship.image ? `<img class="cruise-card-img" src="${ship.image}" alt="" loading="lazy" style="object-fit:cover" onerror="this.outerHTML='<div class=\\'cruise-card-img cruise-card-img-init\\'>🚢</div>'">` : '<div class="cruise-card-img cruise-card-img-init">🚢</div>'}
         <div class="cruise-card-info">
           <div class="cruise-card-name">${ship.name || 'Navire'}</div>
+          ${francoHtmlSmall(cl)}
           <div class="cruise-card-zones">${companiesText}</div>
           <div class="cruise-card-tags">${tagsHtml}</div>
         </div>
@@ -2113,17 +2180,19 @@ function renderList() {
 
     // Gamme badge class
     const gammeClassMap = {'Économique':'tag-gamme-eco','Standard':'tag-gamme-standard','Premium':'tag-gamme-premium','Luxe':'tag-gamme-luxe','Ultra-luxe':'tag-gamme-ultra'};
-    const gammeClass = gammeClassMap[cl.gamme] || 'tag-type';
 
     let tagsHtml = '';
-    if (cl.gamme) tagsHtml += `<span class="cruise-card-tag ${gammeClass}">${cl.gamme}</span>`;
+    getGammes(cl).forEach(g => {
+      tagsHtml += `<span class="cruise-card-tag ${gammeClassMap[g] || 'tag-type'}">${g}</span>`;
+    });
     if (shipCount > 0) tagsHtml += `<span class="cruise-card-tag tag-ships">${shipCount} navire${shipCount > 1 ? 's' : ''}</span>`;
-    types.slice(0, 1).forEach(t => { if (cl.gamme && t.toLowerCase().includes(cl.gamme.toLowerCase())) return; tagsHtml += `<span class="cruise-card-tag tag-type">${t.replace('Croisière ','')}</span>`; });
+    types.slice(0, 1).forEach(t => { const gms = getGammes(cl); if (gms.some(g => t.toLowerCase().includes(g.toLowerCase()))) return; tagsHtml += `<span class="cruise-card-tag tag-type">${t.replace('Croisière ','')}</span>`; });
 
     html += `<div class="cruise-card${isSpon ? ' sponsored' : ''} ${typeClass}" data-id="${cl.id}" onclick="selectCruiseLine('${cl.id}')">
       ${imgSrc ? `<img class="cruise-card-img" src="${imgSrc}" alt="" loading="lazy" onerror="this.outerHTML='<div class=\\'cruise-card-img cruise-card-img-init\\'>${initials}</div>'">` : `<div class="cruise-card-img cruise-card-img-init">${initials}</div>`}
       <div class="cruise-card-info">
         <div class="cruise-card-name">${cl.title}</div>
+        ${francoHtmlSmall(cl)}
         <div class="cruise-card-zones">${zonesStr}</div>
         <div class="cruise-card-tags">${tagsHtml}</div>
       </div>
@@ -2585,24 +2654,28 @@ function renderDetailPanel(cl) {
   let html = `<div class="detail-title">${cl.title}${cl.is_charterer&&cl.has_own_ships?' <span style="display:inline-flex;align-items:center;gap:4px;font-size:.62rem;padding:3px 9px;background:linear-gradient(135deg,#0EA5A2,#F59E0B);color:#fff;border-radius:10px;font-weight:800;letter-spacing:.3px;vertical-align:3px;box-shadow:0 1px 3px rgba(14,165,162,.3)">🚢 ARMATEUR + 🤝 AFFRÉTEUR</span>':cl.is_charterer?' <span style="display:inline-flex;align-items:center;gap:4px;font-size:.62rem;padding:3px 9px;background:linear-gradient(135deg,#F59E0B,#FB923C);color:#fff;border-radius:10px;font-weight:800;letter-spacing:.3px;vertical-align:3px;box-shadow:0 1px 3px rgba(245,158,11,.3)">🤝 AFFRÉTEUR</span>':''}</div>`;
 
   // Gamme & types — moved to top for immediate visibility
-  const gammeColors = {'Économique':'#78909C','Standard':'#22C55E','Premium':'#1B6EC2','Luxe':'#D4A843','Ultra-luxe':'#8B5CF6'};
+  const gammeColors = {'Économique':'#78909C','Standard':'#22C55E','Premium':'#C5960C','Luxe':'#D4A843','Ultra-luxe':'#8B5CF6'};
   const typeColors = {'Croisière maritime':'var(--ct-maritime)','Croisière fluviale':'var(--ct-fluviale)','Maritime & Fluviale':'var(--ct-mixte)'};
   let metaHtml = '';
-  if (cl.gamme) {
-    const gc = gammeColors[cl.gamme] || 'var(--text-light)';
-    metaHtml += `<span style="font-size:0.72rem;padding:4px 12px;background:${gc}15;border:1.5px solid ${gc}40;border-radius:12px;color:${gc};font-weight:700"><i data-lucide="sparkles" style="width:11px;height:11px"></i> Gamme ${cl.gamme}</span>`;
-  }
+  getGammes(cl).forEach(g => {
+    const gc = gammeColors[g] || 'var(--text-light)';
+    if (g === 'Luxe') {
+      metaHtml += `<span style="font-size:0.72rem;padding:4px 12px;background:var(--navy);border:1.5px solid #1E3A5F;border-radius:12px;color:#D4A843;font-weight:700"><i data-lucide="sparkles" style="width:11px;height:11px"></i> Gamme ${g}</span>`;
+    } else {
+      metaHtml += `<span style="font-size:0.72rem;padding:4px 12px;background:${gc}15;border:1.5px solid ${gc}40;border-radius:12px;color:${gc};font-weight:700"><i data-lucide="sparkles" style="width:11px;height:11px"></i> Gamme ${g}</span>`;
+    }
+  });
   (cl.cruise_types || []).forEach(t => {
-    if (cl.gamme && t.toLowerCase().includes(cl.gamme.toLowerCase())) return;
+    const gms = getGammes(cl);
+    if (gms.some(g => t.toLowerCase().includes(g.toLowerCase()))) return;
     const tc = typeColors[t] || 'var(--text-light)';
     metaHtml += `<span style="font-size:0.72rem;padding:4px 12px;background:${tc}12;border:1.5px solid ${tc}30;border-radius:12px;color:${tc};font-weight:600"><i data-lucide="ship" style="width:11px;height:11px"></i> ${t}</span>`;
   });
   if (cl.year_founded) {
     metaHtml += `<span style="font-size:0.72rem;padding:4px 12px;background:rgba(100,116,139,.08);border:1.5px solid rgba(100,116,139,.15);border-radius:12px;color:var(--text-light);font-weight:600"><i data-lucide="calendar" style="width:11px;height:11px"></i> Créée en ${cl.year_founded}</span>`;
   }
-  if (cl.is_francophone) {
-    metaHtml += `<span style="font-size:0.72rem;padding:4px 12px;background:rgba(27,110,194,.08);border:1.5px solid rgba(27,110,194,.2);border-radius:12px;color:var(--blue);font-weight:700">🇫🇷 Francophone</span>`;
-  }
+  const francoLg = francoHtmlLg(cl);
+  if (francoLg) metaHtml += francoLg;
   if (metaHtml) {
     html += `<div style="margin:8px 0 12px;display:flex;flex-wrap:wrap;gap:6px">${metaHtml}</div>`;
   }
