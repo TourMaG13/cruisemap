@@ -2214,8 +2214,8 @@ function updateCount() {
 // =====================================================================
 function initMainMap() {
   mainMap = L.map('mainMap', { zoomControl: true, scrollWheelZoom: true, closePopupOnClick: false, tap: false, minZoom: 3, maxBounds: [[-85, -180],[85, 180]], maxBoundsViscosity: 1.0 }).setView([47, 10], 5);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap © CARTO | © TourMaG.com — CruiseMAP', maxZoom: 18, noWrap: true
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles © Esri | © TourMaG.com — CruiseMAP', maxZoom: 18, noWrap: true
   }).addTo(mainMap);
   markerClusterGroup = L.featureGroup();
   mainMap.addLayer(markerClusterGroup);
@@ -3261,7 +3261,7 @@ function initEmbedMap() {
     dragging: false, scrollWheelZoom: false,
     doubleClickZoom: false, touchZoom: false, keyboard: false
   }).setView([46, 15], 4);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 6 }).addTo(embedMapInstance);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16 }).addTo(embedMapInstance);
 
   // River routes with detailed paths
   const routes = [
